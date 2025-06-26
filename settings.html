@@ -1,153 +1,187 @@
-<!-- C:\SillyTavern\public\scripts\extensions\third-party\ProsePolisher\settings.html -->
-<div class="prose-polisher-settings">
+<!-- Smart Attachment Cleaner Settings -->
+<div class="smart-attachment-cleaner-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b>Prose Polisher (Regex + AI)</b>
+            <b>🧹 Smart Attachment Cleaner</b>
             <div class="inline-drawer-icon fa-solid fa-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content">
-            <!-- ORIGINAL PROSE POLISHER SETTINGS -->
-            <p>A comprehensive tool to enhance AI writing quality by fixing echoes and repetitive phrases ('slop').</p>
+            <p class="extension-description">
+                Automatically removes message attachments to keep your chat clean and save storage space. 
+                Smart detection preserves important files while cleaning up temporary attachments.
+            </p>
+            
             <hr>
+            
+            <!-- Main Enable/Disable -->
             <div class="form-group">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="prose_polisher_enable_static">
-                    <span><b>Enable Static Regex Fixes:</b> Instantly corrects common slop using a curated list.</span>
+                <label class="checkbox_label smart-cleaner-main-toggle">
+                    <input type="checkbox" id="smart-cleaner-enabled" checked>
+                    <span><b>🟢 Enable Smart Attachment Cleaner</b></span>
                 </label>
+                <small>Master switch for all attachment cleaning functionality.</small>
             </div>
-            <div class="form-group">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="prose_polisher_enable_dynamic">
-                    <span><b>Enable Dynamic AI Learning:</b> Automatically detects new slop and generates new regex rules based on message frequency.</span>
-                </label>
-            </div>
-             <div class="form-group">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="prose_polisher_enable_global_regex">
-                    <span><b>Integrate with Global Regex:</b> Add active ProsePolisher rules to ST's main regex list. (Recommended: ON)</span>
-                </label>
-            </div>
-            <hr>
-            <label for="prose_polisher_dynamic_trigger">Auto-Rule Gen Trigger (messages after new slop detected):</label>
-            <input type="number" id="prose_polisher_dynamic_trigger" class="text_pole" min="5">
-            <small>After a phrase hits the slop threshold, how many *more* AI messages until AI attempts to generate rules. Default: 30. Set higher to batch more candidates.</small>
 
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
-                <button id="prose_polisher_open_navigator_button" class="menu_button">
-                    <i class="fa-solid fa-gears"></i> Open Regex Navigator
-                </button>
-                <button id="prose_polisher_manage_whitelist_button" class="menu_button" title="Manage a list of approved words. Phrases containing these words will be IGNORED by the frequency analyzer. (e.g., 'the', 'a', character names)">
-                    <i class="fa-solid fa-check-square"></i> Manage Whitelist
-                </button>
-                <button id="prose_polisher_manage_blacklist_button" class="menu_button" title="Manage a list of banned words. Phrases containing these words will be PRIORITIZED for slop analysis and rule generation. (e.g., 'suddenly', 'began to')">
-                    <i class="fa-solid fa-ban"></i> Manage Blacklist
-                </button>
-                 <button id="prose_polisher_clear_frequency_button" class="menu_button">
-                    <i class="fa-solid fa-eraser"></i> Clear Frequency Data
-                </button>
-                <button id="prose_polisher_analyze_chat_button" class="menu_button" title="Analyze the entire current chat history to populate frequency data for potential slop. Does not auto-generate rules.">
-                    <i class="fa-solid fa-magnifying-glass-chart"></i> Analyze Chat History
-                </button>
-                <button id="prose_polisher_view_frequency_button" class="menu_button" title="View the currently tracked repetitive phrases and their counts.">
-                    <i class="fa-solid fa-list-ol"></i> View Frequency Data
-                </button>
-                <button id="prose_polisher_generate_rules_button" class="menu_button" title="Manually trigger AI to generate regex rules for currently identified slop candidates.">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> Generate AI Rules from Analysis
-                </button>
-            </div>
             <hr>
 
-            <!-- PROJECT GREMLIN SETTINGS (REFACTORED) -->
-            <h4>Project Gremlin Settings</h4>
-            <small>An experimental, multi-agent generation pipeline for maximum quality. When enabled via its toggle button, it runs automatically on every user message. This is slow and API-intensive.</small>
+            <!-- Cleaning Options -->
+            <h4>🎯 Cleaning Options</h4>
+            
             <div class="form-group">
                 <label class="checkbox_label">
-                    <input type="checkbox" id="pp_projectGremlinEnabled">
-                    <span><b>Enable Project Gremlin</b> (Controlled by UI button)</span>
+                    <input type="checkbox" id="smart-cleaner-after-gen" checked>
+                    <span><b>Auto-clean after AI generation</b></span>
                 </label>
+                <small>Automatically removes attachments from messages after the AI finishes responding.</small>
             </div>
 
-            <!-- Papa Gremlin -->
-            <div class="pp-gremlin-role-config">
+            <div class="form-group">
                 <label class="checkbox_label">
-                    <input type="checkbox" id="pp_gremlinPapaEnabled">
-                    <span>Papa Gremlin (Architect): <span id="pp_gremlinPapaDisplay" class="pp-api-display"></span></span>
+                    <input type="checkbox" id="smart-cleaner-from-history">
+                    <span><b>Clean attachments from chat history</b></span>
                 </label>
-                <div class="pp-controls-wrapper">
-                    <select id="pp_gremlinPapaPreset" class="text_pole" title="Select a parameter preset (temp, top_p, etc.)"></select>
-                    <button class="menu_button pp-browse-gremlin-preset-btn" data-target-select="pp_gremlinPapaPreset" title="Browse Presets"><i class="fa-solid fa-folder-open"></i></button>
-                    <button class="menu_button pp-select-api-btn" data-gremlin-role="papa" title="Select API & Model"><i class="fa-solid fa-satellite-dish"></i></button>
-                    <button class="menu_button pp-edit-instructions-btn" data-gremlin-role="papa" title="Edit Papa Gremlin's Instructions"><i class="fa-solid fa-file-pen"></i></button>
-                </div>
-                <small>High-intelligence model for initial blueprinting.</small>
+                <small>Remove attachments from existing messages when switching chats. <strong>Use with caution!</strong></small>
             </div>
 
-            <!-- Twin Gremlins -->
-            <div class="pp-gremlin-role-config">
+            <div class="form-group">
                 <label class="checkbox_label">
-                     <input type="checkbox" id="pp_gremlinTwinsEnabled">
-                    <span>Twin Gremlins (Refiners): <span id="pp_gremlinTwinsDisplay" class="pp-api-display"></span></span>
+                    <input type="checkbox" id="smart-cleaner-preserve-files" checked>
+                    <span><b>Preserve important files</b></span>
                 </label>
-                <div class="pp-controls-wrapper">
-                    <select id="pp_gremlinTwinsPreset" class="text_pole" title="Select a parameter preset (temp, top_p, etc.)"></select>
-                    <button class="menu_button pp-browse-gremlin-preset-btn" data-target-select="pp_gremlinTwinsPreset" title="Browse Presets"><i class="fa-solid fa-folder-open"></i></button>
-                    <button class="menu_button pp-select-api-btn" data-gremlin-role="twins" title="Select API & Model"><i class="fa-solid fa-satellite-dish"></i></button>
-                    <button class="menu_button pp-edit-instructions-btn" data-gremlin-role="twins" title="Edit Twin Gremlins' Instructions"><i class="fa-solid fa-file-pen"></i></button>
-                </div>
-                <div style="margin-top: 8px;">
-                    <label for="pp_gremlinTwinsIterations" style="margin-right: 5px; font-weight:normal; font-size: 0.9em;">Refinement Iterations (per Twin):</label>
-                    <select id="pp_gremlinTwinsIterations" class="text_pole" style="width: auto; font-size: 0.9em; padding: 4px;" title="Number of messages each Twin (Vex/Vax) will generate.">
-                        <option value="1">1 Iteration (2 total calls)</option>
-                        <option value="2">2 Iterations (4 total calls)</option>
-                        <option value="3" selected>3 Iterations (6 total calls)</option>
-                    </select>
-                    <small style="display: block; margin-top: 2px;">Controls how many refinement suggestions each Twin provides. More iterations mean more detailed (and slower) planning.</small>
-                </div>
-                <small>Fast model for the Vex/Vax refinement (e.g., character depth, plot progression).</small>
+                <small>Keep character cards, presets, configs, and other important files (recommended).</small>
             </div>
 
-            <!-- Mama Gremlin -->
-            <div class="pp-gremlin-role-config">
+            <!-- Cleanup Delay -->
+            <div class="form-group">
+                <label for="smart-cleaner-delay"><b>⏱️ Cleanup Delay:</b> <span id="delay-value">2000ms</span></label>
+                <input type="range" id="smart-cleaner-delay" class="text_pole" 
+                       min="500" max="10000" step="500" value="2000"
+                       style="width: 100%; margin-top: 5px;">
+                <small>How long to wait after generation before cleaning attachments (500ms - 10s).</small>
+            </div>
+
+            <hr>
+
+            <!-- Notifications -->
+            <h4>🔔 Notifications</h4>
+            <div class="form-group">
                 <label class="checkbox_label">
-                    <input type="checkbox" id="pp_gremlinMamaEnabled">
-                    <span>Mama Gremlin (Supervisor): <span id="pp_gremlinMamaDisplay" class="pp-api-display"></span></span>
+                    <input type="checkbox" id="smart-cleaner-notifications" checked>
+                    <span><b>Show cleanup notifications</b></span>
                 </label>
-                <div class="pp-controls-wrapper">
-                    <select id="pp_gremlinMamaPreset" class="text_pole" title="Select a parameter preset (temp, top_p, etc.)"></select>
-                    <button class="menu_button pp-browse-gremlin-preset-btn" data-target-select="pp_gremlinMamaPreset" title="Browse Presets"><i class="fa-solid fa-folder-open"></i></button>
-                    <button class="menu_button pp-select-api-btn" data-gremlin-role="mama" title="Select API & Model"><i class="fa-solid fa-satellite-dish"></i></button>
-                    <button class="menu_button pp-edit-instructions-btn" data-gremlin-role="mama" title="Edit Mama Gremlin's Instructions"><i class="fa-solid fa-file-pen"></i></button>
-                </div>
-                <small>Balanced model for final blueprint synthesis.</small>
+                <small>Display toast notifications when attachments are cleaned.</small>
             </div>
 
-            <!-- Writer Gremlin -->
-            <div class="pp-gremlin-role-config">
-                <label>Writer Gremlin: <span id="pp_gremlinWriterDisplay" class="pp-api-display"></span></label>
-                <div class="pp-controls-wrapper">
-                    <select id="pp_gremlinWriterPreset" class="text_pole" title="Select a parameter preset (temp, top_p, etc.)"></select>
-                    <button class="menu_button pp-browse-gremlin-preset-btn" data-target-select="pp_gremlinWriterPreset" title="Browse Presets"><i class="fa-solid fa-folder-open"></i></button>
-                    <button class="menu_button pp-select-api-btn" data-gremlin-role="writer" title="Select API & Model"><i class="fa-solid fa-satellite-dish"></i></button>
-                    <button class="menu_button pp-edit-instructions-btn" data-gremlin-role="writer" title="Edit Writer Gremlin's Instructions"><i class="fa-solid fa-file-pen"></i></button>
-                </div>
-                <small>Creative model for writing the final response. (This step is always active)</small>
+            <hr>
+
+            <!-- Manual Controls -->
+            <h4>🎮 Manual Controls</h4>
+            <div class="smart-cleaner-controls">
+                <button id="smart-cleaner-manual-clean" class="menu_button" title="Manually clean all attachments from current chat">
+                    <i class="fa-solid fa-broom"></i> Clean Current Chat
+                </button>
+                <button id="smart-cleaner-reset-config" class="menu_button" title="Reset all settings to defaults">
+                    <i class="fa-solid fa-undo"></i> Reset Settings
+                </button>
             </div>
 
-            <!-- Auditor Gremlin -->
-            <div class="pp-gremlin-role-config">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="pp_gremlinAuditorEnabled">
-                    <span>Auditor Gremlin (Editor): <span id="pp_gremlinAuditorDisplay" class="pp-api-display"></span></span>
-                </label>
-                <div class="pp-controls-wrapper">
-                    <select id="pp_gremlinAuditorPreset" class="text_pole" title="Select a parameter preset (temp, top_p, etc.)"></select>
-                    <button class="menu_button pp-browse-gremlin-preset-btn" data-target-select="pp_gremlinAuditorPreset" title="Browse Presets"><i class="fa-solid fa-folder-open"></i></button>
-                    <button class="menu_button pp-select-api-btn" data-gremlin-role="auditor" title="Select API & Model"><i class="fa-solid fa-satellite-dish"></i></button>
-                    <button class="menu_button pp-edit-instructions-btn" data-gremlin-role="auditor" title="Edit Auditor Gremlin's Instructions"><i class="fa-solid fa-file-pen"></i></button>
+            <hr>
+
+            <!-- Statistics -->
+            <div class="smart-cleaner-stats">
+                <h4>📊 Statistics</h4>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Attachments Cleaned:</span>
+                        <span class="stat-value" id="attachments-cleaned-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Files Preserved:</span>
+                        <span class="stat-value" id="files-preserved-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Last Cleanup:</span>
+                        <span class="stat-value" id="last-cleanup-time">Never</span>
+                    </div>
                 </div>
-                <small>Optional final line-editor to fix prose, repetition, and quality. Receives the writer's output and rewrites it before displaying.</small>
             </div>
 
+            <hr>
+
+            <!-- Advanced Settings -->
+            <details class="smart-cleaner-advanced">
+                <summary><b>⚙️ Advanced Settings</b></summary>
+                <div style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label for="smart-cleaner-selectors"><b>Custom Attachment Selectors:</b></label>
+                        <textarea id="smart-cleaner-selectors" class="text_pole" rows="3" placeholder="Enter CSS selectors, one per line">.message-attachment
+.image-container
+.file-attachment</textarea>
+                        <small>Advanced: Add custom CSS selectors for attachment elements to clean.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="smart-cleaner-preserve-patterns"><b>Preserve File Patterns:</b></label>
+                        <textarea id="smart-cleaner-preserve-patterns" class="text_pole" rows="2" placeholder="Enter patterns, one per line">character
+preset
+config</textarea>
+                        <small>Files containing these keywords will be preserved (case-insensitive).</small>
+                    </div>
+                </div>
+            </details>
+
+            <hr>
+
+            <!-- Help -->
+            <details class="smart-cleaner-help">
+                <summary><b>❓ Help & Info</b></summary>
+                <div style="margin-top: 10px;">
+                    <h5>How it works:</h5>
+                    <ul>
+                        <li><strong>Automatic:</strong> Cleans attachments after AI generates responses</li>
+                        <li><strong>Smart:</strong> Preserves important files like character cards and presets</li>
+                        <li><strong>Configurable:</strong> Adjust timing, notifications, and cleaning behavior</li>
+                    </ul>
+                    
+                    <h5>File Preservation:</h5>
+                    <p>By default, files with these extensions or keywords are preserved:</p>
+                    <ul>
+                        <li><strong>Extensions:</strong> .json, .yaml, .yml, .config, .settings</li>
+                        <li><strong>Keywords:</strong> character, preset, config, settings, backup</li>
+                    </ul>
+                    
+                    <h5>Performance:</h5>
+                    <p>This extension is lightweight and won't affect chat performance. It only processes attachments when needed.</p>
+                </div>
+            </details>
         </div>
     </div>
 </div>
+
+<script>
+// Initialize reset button functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const resetButton = document.getElementById('smart-cleaner-reset-config');
+    if (resetButton) {
+        resetButton.addEventListener('click', function() {
+            if (confirm('Reset all Smart Attachment Cleaner settings to defaults?')) {
+                // Reset all checkboxes and inputs to defaults
+                document.getElementById('smart-cleaner-enabled').checked = true;
+                document.getElementById('smart-cleaner-after-gen').checked = true;
+                document.getElementById('smart-cleaner-from-history').checked = false;
+                document.getElementById('smart-cleaner-preserve-files').checked = true;
+                document.getElementById('smart-cleaner-notifications').checked = true;
+                document.getElementById('smart-cleaner-delay').value = 2000;
+                document.getElementById('delay-value').textContent = '2000ms';
+                
+                // Trigger change events to save
+                document.getElementById('smart-cleaner-enabled').dispatchEvent(new Event('change'));
+                
+                if (typeof toastr !== 'undefined') {
+                    toastr.success('Settings reset to defaults', 'Smart Attachment Cleaner');
+                }
+            }
+        });
+    }
+});
+</script>

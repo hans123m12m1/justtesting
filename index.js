@@ -1,109 +1,356 @@
-// Ensure SillyTavern global object is available
-if (typeof SillyTavern === 'undefined') {
-    console.error('SillyTavern object not found. Is the extension loaded correctly?');
-}
+// Smart Attachment Cleaner Extension for SillyTavern
+// Automatically removes attachments after AI generation is completed
 
-// Get the extension's configuration (defined in manifest.json and can be managed in ST UI)
-let extensionConfig = SillyTavern.getExtensionConfig('message-attachment-cleaner');
+(() => {
+    'use strict';
 
-// Initialize enabled state from config or default to false
-let isEnabled = extensionConfig.enabled !== undefined ? extensionConfig.enabled : false;
-
-// Function to update the button text and class to reflect the current state
-function updateButtonUI() {
-    const button = document.getElementById('toggleAttachmentCleaner');
-    if (button) {
-        button.textContent = `Attachment Cleaner: ${isEnabled ? 'Enabled' : 'Disabled'}`;
-        if (isEnabled) {
-            button.classList.remove('disabled');
-            button.classList.add('enabled');
-        } else {
-            button.classList.remove('enabled');
-            button.classList.add('disabled');
-        }
-    }
-}
-
-// Function to toggle the attachment cleaning functionality
-function toggleAttachmentCleaner() {
-    isEnabled = !isEnabled;
-    extensionConfig.enabled = isEnabled; // Update the state in the config object
-    SillyTavern.saveExtensionConfig('message-attachment-cleaner', extensionConfig); // Persist the config
-    console.log(`Message Attachment Cleaner is now: ${isEnabled ? 'Enabled' : 'Disabled'}`);
-    updateButtonUI();
-}
-
-// Function to remove attachments from a given message's DOM element
-function removeAttachmentsFromDOM(messageElement) {
-    // Common selectors for attachment containers in SillyTavern messages
-    const attachmentContainers = messageElement.querySelectorAll('.message-attachment, .image-container, .file-attachment, .img_container');
-    attachmentContainers.forEach(container => {
-        container.remove();
-        console.log('Removed attachment DOM element.');
-    });
-}
-
-// This function runs when the extension is ready and SillyTavern's UI is loaded
-SillyTavern.on('ready', () => {
-    console.log('Message Attachment Cleaner extension ready!');
-    const context = SillyTavern.getContext();
-
-    // Find a suitable place to inject the toggle button.
-    // The extension settings column is a good general spot.
-    const settingsPanel = document.getElementById('extension_settings_column');
-
-    if (settingsPanel) {
-        const button = document.createElement('button');
-        button.id = 'toggleAttachmentCleaner';
-        button.onclick = toggleAttachmentCleaner;
-        settingsPanel.prepend(button); // Add to the top of the settings column
-        updateButtonUI(); // Set initial button state
-    } else {
-        console.warn('Could not find #extension_settings_column to append button. Trying #main_controls.');
-        // Fallback: Try to add to the main controls if settings panel not found
-        const mainControls = document.getElementById('main_controls');
-        if (mainControls) {
-            const button = document.createElement('button');
-            button.id = 'toggleAttachmentCleaner';
-            button.onclick = toggleAttachmentCleaner;
-            mainControls.prepend(button);
-            updateButtonUI();
-        } else {
-            console.error('Could not find a suitable place to inject the toggle button. Please adjust index.js.');
-        }
+    // Ensure SillyTavern global object is available
+    if (typeof SillyTavern === 'undefined') {
+        console.error('SillyTavern object not found. Smart Attachment Cleaner extension cannot load.');
+        return;
     }
 
-    // Hook into 'messageReceived' event: This event fires when message data is received
-    // but possibly before it's fully rendered into the DOM. This is ideal for cleaning the data model.
-    context.on('messageReceived', (data) => {
-        if (isEnabled && data.attachments && data.attachments.length > 0) {
-            console.log('Detected attachments in received message data. Clearing them...');
-            data.attachments = []; // Clear attachments from the incoming message data object
-        }
-    });
+    // Extension configuration
+    let extensionConfig = SillyTavern.getExtensionConfig('smart-attachment-cleaner') || {};
+    
+    // Default configuration
+    const defaultConfig = {
+        enabled: true,
+        removeAfterGeneration: true,
+        removeFromHistory: false,
+        showNotifications: true,
+        cleanupDelay: 2000, // 2 seconds delay after generation
+        preserveImportantFiles: true
+    };
 
-    // Hook into 'messageAdded' event: This event fires when a message's DOM element is added to the chat.
-    // This is a fallback to remove any attachment elements that might still render.
-    context.on('messageAdded', (data) => {
-        if (isEnabled) {
-            // Check if data.domElement exists and has attachment-like content
-            // The previous 'messageReceived' hook should ideally prevent most of this.
-            if (data.domElement) {
-                // We're checking the DOM directly here, in case the data model change didn't fully prevent rendering
-                const attachmentElements = data.domElement.querySelectorAll('.message-attachment, .image-container, .file-attachment, .img_container');
-                if (attachmentElements.length > 0) {
-                    console.log('Detected attachment DOM elements after message added. Removing them...');
-                    removeAttachmentsFromDOM(data.domElement);
+    // Merge with defaults
+    extensionConfig = { ...defaultConfig, ...extensionConfig };
+
+    // State variables
+    let isGenerating = false;
+    let pendingCleanup = new Set();
+    let statusIndicator = null;
+
+    // Save configuration
+    function saveConfig() {
+        SillyTavern.saveExtensionConfig('smart-attachment-cleaner', extensionConfig);
+    }
+
+    // Create status indicator
+    function createStatusIndicator() {
+        if (statusIndicator) return;
+
+        statusIndicator = document.createElement('div');
+        statusIndicator.id = 'attachment-cleaner-status';
+        statusIndicator.className = 'attachment-cleaner-status';
+        statusIndicator.innerHTML = `
+            <i class="fa-solid fa-broom"></i>
+            <span>Smart Cleaner: ${extensionConfig.enabled ? 'ON' : 'OFF'}</span>
+        `;
+        
+        // Add to top bar or suitable location
+        const topBar = document.querySelector('#top-bar') || document.querySelector('#main_controls');
+        if (topBar) {
+            topBar.appendChild(statusIndicator);
+        }
+
+        updateStatusIndicator();
+    }
+
+    // Update status indicator
+    function updateStatusIndicator() {
+        if (!statusIndicator) return;
+
+        const span = statusIndicator.querySelector('span');
+        const icon = statusIndicator.querySelector('i');
+        
+        if (extensionConfig.enabled) {
+            statusIndicator.classList.add('enabled');
+            statusIndicator.classList.remove('disabled');
+            span.textContent = 'Smart Cleaner: ON';
+            icon.className = 'fa-solid fa-broom';
+        } else {
+            statusIndicator.classList.add('disabled');
+            statusIndicator.classList.remove('enabled');
+            span.textContent = 'Smart Cleaner: OFF';
+            icon.className = 'fa-solid fa-broom-ball';
+        }
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+        if (!extensionConfig.showNotifications) return;
+
+        // Use SillyTavern's toast system if available
+        if (typeof toastr !== 'undefined') {
+            toastr[type](message, 'Smart Attachment Cleaner');
+        } else {
+            console.log(`[Smart Attachment Cleaner] ${message}`);
+        }
+    }
+
+    // Check if file should be preserved
+    function shouldPreserveFile(filename) {
+        if (!extensionConfig.preserveImportantFiles) return false;
+        
+        const importantExtensions = ['.json', '.yaml', '.yml', '.config', '.settings'];
+        const importantKeywords = ['character', 'preset', 'config', 'settings', 'backup'];
+        
+        const lowerFilename = filename.toLowerCase();
+        
+        return importantExtensions.some(ext => lowerFilename.endsWith(ext)) ||
+               importantKeywords.some(keyword => lowerFilename.includes(keyword));
+    }
+
+    // Remove attachments from DOM
+    function removeAttachmentsFromDOM(messageElement, messageId = null) {
+        if (!messageElement) return 0;
+
+        const attachmentSelectors = [
+            '.message-attachment',
+            '.image-container',
+            '.file-attachment',
+            '.img_container',
+            '.attachment-wrapper',
+            '.mes_img',
+            '.mes_file',
+            '[data-attachment]'
+        ];
+
+        let removedCount = 0;
+        
+        attachmentSelectors.forEach(selector => {
+            const attachments = messageElement.querySelectorAll(selector);
+            attachments.forEach(attachment => {
+                // Check if we should preserve this attachment
+                const filename = attachment.getAttribute('data-filename') || 
+                               attachment.getAttribute('title') || 
+                               attachment.textContent || '';
+                
+                if (extensionConfig.preserveImportantFiles && shouldPreserveFile(filename)) {
+                    console.log(`[Smart Attachment Cleaner] Preserving important file: ${filename}`);
+                    return;
                 }
+
+                attachment.style.transition = 'opacity 0.3s ease-out';
+                attachment.style.opacity = '0';
+                
+                setTimeout(() => {
+                    if (attachment.parentNode) {
+                        attachment.remove();
+                        removedCount++;
+                        console.log(`[Smart Attachment Cleaner] Removed attachment: ${filename || 'unnamed'}`);
+                    }
+                }, 300);
+            });
+        });
+
+        return removedCount;
+    }
+
+    // Clean message data
+    function cleanMessageData(messageData) {
+        if (!messageData || !extensionConfig.enabled) return;
+
+        if (messageData.attachments && Array.isArray(messageData.attachments)) {
+            const originalCount = messageData.attachments.length;
+            
+            if (extensionConfig.preserveImportantFiles) {
+                messageData.attachments = messageData.attachments.filter(attachment => {
+                    const filename = attachment.name || attachment.filename || '';
+                    return shouldPreserveFile(filename);
+                });
             } else {
-                console.warn('DOM element not directly provided in messageAdded event. This might be an older SillyTavern version or different event behavior.');
-                // As a last resort, if domElement isn't passed, try to find the last message element
-                const messageElements = document.querySelectorAll('.mes_text'); // Common class for message text
-                if (messageElements.length > 0) {
-                    const lastMessageElement = messageElements[messageElements.length - 1];
-                    removeAttachmentsFromDOM(lastMessageElement);
-                }
+                messageData.attachments = [];
+            }
+
+            const removedCount = originalCount - messageData.attachments.length;
+            if (removedCount > 0) {
+                console.log(`[Smart Attachment Cleaner] Cleaned ${removedCount} attachment(s) from message data`);
             }
         }
+
+        // Clean other attachment properties
+        ['images', 'files', 'media'].forEach(prop => {
+            if (messageData[prop] && Array.isArray(messageData[prop])) {
+                if (!extensionConfig.preserveImportantFiles) {
+                    messageData[prop] = [];
+                }
+            }
+        });
+    }
+
+    // Cleanup after generation
+    function scheduleCleanup(messageElement, messageId) {
+        if (!extensionConfig.enabled || !extensionConfig.removeAfterGeneration) return;
+
+        setTimeout(() => {
+            if (messageElement && messageElement.parentNode) {
+                const removedCount = removeAttachmentsFromDOM(messageElement, messageId);
+                if (removedCount > 0) {
+                    showNotification(`Cleaned ${removedCount} attachment(s) after generation`, 'success');
+                }
+            }
+            pendingCleanup.delete(messageId);
+        }, extensionConfig.cleanupDelay);
+    }
+
+    // Initialize extension settings UI
+    function initializeSettingsUI() {
+        // Update checkboxes
+        const enabledCheckbox = document.getElementById('smart-cleaner-enabled');
+        const afterGenCheckbox = document.getElementById('smart-cleaner-after-gen');
+        const fromHistoryCheckbox = document.getElementById('smart-cleaner-from-history');
+        const notificationsCheckbox = document.getElementById('smart-cleaner-notifications');
+        const preserveFilesCheckbox = document.getElementById('smart-cleaner-preserve-files');
+        const delaySlider = document.getElementById('smart-cleaner-delay');
+        const delayValue = document.getElementById('delay-value');
+
+        if (enabledCheckbox) {
+            enabledCheckbox.checked = extensionConfig.enabled;
+            enabledCheckbox.addEventListener('change', (e) => {
+                extensionConfig.enabled = e.target.checked;
+                saveConfig();
+                updateStatusIndicator();
+                showNotification(`Smart Attachment Cleaner ${e.target.checked ? 'enabled' : 'disabled'}`);
+            });
+        }
+
+        if (afterGenCheckbox) {
+            afterGenCheckbox.checked = extensionConfig.removeAfterGeneration;
+            afterGenCheckbox.addEventListener('change', (e) => {
+                extensionConfig.removeAfterGeneration = e.target.checked;
+                saveConfig();
+            });
+        }
+
+        if (fromHistoryCheckbox) {
+            fromHistoryCheckbox.checked = extensionConfig.removeFromHistory;
+            fromHistoryCheckbox.addEventListener('change', (e) => {
+                extensionConfig.removeFromHistory = e.target.checked;
+                saveConfig();
+            });
+        }
+
+        if (notificationsCheckbox) {
+            notificationsCheckbox.checked = extensionConfig.showNotifications;
+            notificationsCheckbox.addEventListener('change', (e) => {
+                extensionConfig.showNotifications = e.target.checked;
+                saveConfig();
+            });
+        }
+
+        if (preserveFilesCheckbox) {
+            preserveFilesCheckbox.checked = extensionConfig.preserveImportantFiles;
+            preserveFilesCheckbox.addEventListener('change', (e) => {
+                extensionConfig.preserveImportantFiles = e.target.checked;
+                saveConfig();
+            });
+        }
+
+        if (delaySlider && delayValue) {
+            delaySlider.value = extensionConfig.cleanupDelay;
+            delayValue.textContent = `${extensionConfig.cleanupDelay}ms`;
+            delaySlider.addEventListener('input', (e) => {
+                extensionConfig.cleanupDelay = parseInt(e.target.value);
+                delayValue.textContent = `${extensionConfig.cleanupDelay}ms`;
+                saveConfig();
+            });
+        }
+
+        // Manual cleanup button
+        const manualCleanButton = document.getElementById('smart-cleaner-manual-clean');
+        if (manualCleanButton) {
+            manualCleanButton.addEventListener('click', () => {
+                const messageElements = document.querySelectorAll('.mes');
+                let totalRemoved = 0;
+                
+                messageElements.forEach(element => {
+                    totalRemoved += removeAttachmentsFromDOM(element);
+                });
+                
+                showNotification(`Manually cleaned ${totalRemoved} attachment(s) from chat`, 'info');
+            });
+        }
+    }
+
+    // Main initialization
+    SillyTavern.on('ready', () => {
+        console.log('[Smart Attachment Cleaner] Extension initializing...');
+        
+        const context = SillyTavern.getContext();
+        
+        // Create status indicator
+        createStatusIndicator();
+        
+        // Initialize settings UI when settings panel is opened
+        setTimeout(() => {
+            initializeSettingsUI();
+        }, 1000);
+
+        // Hook into message events
+        context.on('messageReceived', (data) => {
+            if (!extensionConfig.enabled) return;
+            
+            cleanMessageData(data);
+            
+            if (data.is_user) {
+                // User message - clean immediately if enabled
+                setTimeout(() => {
+                    const messageElements = document.querySelectorAll('.mes:last-child');
+                    if (messageElements.length > 0) {
+                        removeAttachmentsFromDOM(messageElements[0]);
+                    }
+                }, 100);
+            }
+        });
+
+        context.on('messageAdded', (data) => {
+            if (!extensionConfig.enabled) return;
+            
+            const messageElement = data.domElement || data.element;
+            if (messageElement) {
+                // If this is during generation, schedule cleanup for after
+                if (isGenerating && !data.is_user) {
+                    pendingCleanup.add(data.id || Date.now());
+                    scheduleCleanup(messageElement, data.id);
+                } else if (data.is_user) {
+                    // Clean user messages immediately
+                    setTimeout(() => removeAttachmentsFromDOM(messageElement), 100);
+                }
+            }
+        });
+
+        // Track generation state
+        context.on('generation_started', () => {
+            isGenerating = true;
+            console.log('[Smart Attachment Cleaner] Generation started - scheduling cleanup');
+        });
+
+        context.on('generation_stopped', () => {
+            isGenerating = false;
+            console.log('[Smart Attachment Cleaner] Generation completed');
+        });
+
+        // Clean up on chat change
+        context.on('chatChanged', () => {
+            pendingCleanup.clear();
+            if (extensionConfig.removeFromHistory) {
+                setTimeout(() => {
+                    const messageElements = document.querySelectorAll('.mes');
+                    let totalRemoved = 0;
+                    messageElements.forEach(element => {
+                        totalRemoved += removeAttachmentsFromDOM(element);
+                    });
+                    if (totalRemoved > 0) {
+                        showNotification(`Cleaned ${totalRemoved} attachment(s) from chat history`, 'info');
+                    }
+                }, 500);
+            }
+        });
+
+        console.log('[Smart Attachment Cleaner] Extension ready!');
+        showNotification('Smart Attachment Cleaner loaded successfully!', 'success');
     });
-});
+
+})();
