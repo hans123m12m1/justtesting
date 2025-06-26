@@ -1,16 +1,259 @@
-{
-    "display_name": "Justtesting",
-    "loading_order": 1,
-    "requires": [],
-    "optional": [],
-    "dependencies": [],
-    "js": "index.js",
-    "css": "style.css",
-    "author": "Justme",
-    "version": "1.0.0",
-    "homePage": "https://github.com/hans123m12m1/justtesting",
-    "auto_update": true,
-    "i18n": {
-        "de-de": "i18n/de-de.json"
+// Ensure SillyTavern global object is available
+if (typeof SillyTavern === 'undefined') {
+    console.error('SillyTavern object not found. Is the extension loaded correctly?');
+    // If SillyTavern is not defined, we can't proceed.
+    throw new Error('SillyTavern object is not available. This script must run within SillyTavern.');
+}
+
+// Global variable to hold our extension's configuration
+let extensionConfig;
+
+// --- Helper Functions to manage UI state and config ---
+
+/**
+ * Syncs a checkbox element with the extension config.
+ * @param {string} id - The ID of the checkbox element.
+ * @param {boolean} defaultValue - The default value if not set in config.
+ */
+function setupCheckbox(id, defaultValue) {
+    const el = document.getElementById(id);
+    if (el) {
+        // Set initial state from config, or use default
+        el.checked = extensionConfig[id] !== undefined ? extensionConfig[id] : defaultValue;
+        // Add event listener to save changes
+        el.addEventListener('change', () => {
+            extensionConfig[id] = el.checked;
+            SillyTavern.saveExtensionConfig('prose-polisher', extensionConfig);
+            console.log(`Prose Polisher: ${id} set to ${el.checked}`);
+            // Potentially trigger other UI updates or logic based on this change
+        });
+    } else {
+        console.warn(`Prose Polisher: Checkbox element with ID '${id}' not found.`);
     }
 }
+
+/**
+ * Syncs a number input element with the extension config.
+ * @param {string} id - The ID of the number input element.
+ * @param {number} defaultValue - The default value if not set in config.
+ */
+function setupNumberInput(id, defaultValue) {
+    const el = document.getElementById(id);
+    if (el) {
+        // Set initial state from config, or use default
+        el.value = extensionConfig[id] !== undefined ? extensionConfig[id] : defaultValue;
+        // Add event listener to save changes
+        el.addEventListener('change', () => {
+            const numValue = Number(el.value);
+            if (!isNaN(numValue)) {
+                extensionConfig[id] = numValue;
+                SillyTavern.saveExtensionConfig('prose-polisher', extensionConfig);
+                console.log(`Prose Polisher: ${id} set to ${numValue}`);
+            } else {
+                console.warn(`Prose Polisher: Invalid number input for ${id}: ${el.value}`);
+            }
+        });
+    } else {
+        console.warn(`Prose Polisher: Number input element with ID '${id}' not found.`);
+    }
+}
+
+/**
+ * Syncs a select (dropdown) element with the extension config.
+ * @param {string} id - The ID of the select element.
+ * @param {string} defaultValue - The default value if not set in config.
+ */
+function setupSelect(id, defaultValue) {
+    const el = document.getElementById(id);
+    if (el) {
+        // Set initial state from config, or use default
+        el.value = extensionConfig[id] !== undefined ? extensionConfig[id] : defaultValue;
+        // Add event listener to save changes
+        el.addEventListener('change', () => {
+            extensionConfig[id] = el.value;
+            SillyTavern.saveExtensionConfig('prose-polisher', extensionConfig);
+            console.log(`Prose Polisher: ${id} set to ${el.value}`);
+        });
+    } else {
+        console.warn(`Prose Polisher: Select element with ID '${id}' not found.`);
+    }
+}
+
+/**
+ * Sets up a button with a click handler.
+ * @param {string} id - The ID of the button element.
+ * @param {Function} handler - The function to call on button click.
+ */
+function setupButton(id, handler) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('click', handler);
+    } else {
+        console.warn(`Prose Polisher: Button element with ID '${id}' not found.`);
+    }
+}
+
+// --- Main Extension Logic ---
+SillyTavern.on('ready', async () => {
+    console.log('Prose Polisher extension initializing...');
+
+    // Get the extension's configuration. This will load values from manifest.json
+    // or from previously saved user settings.
+    extensionConfig = SillyTavern.getExtensionConfig('prose-polisher');
+    console.log('Prose Polisher config loaded:', extensionConfig);
+
+    // Find the dedicated extension settings column in SillyTavern UI
+    const settingsPanel = document.getElementById('extension_settings_column');
+
+    if (settingsPanel) {
+        try {
+            // Fetch the HTML content for our settings panel
+            const response = await fetch('./settings.html');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const htmlContent = await response.text();
+
+            // Inject the HTML into the settings panel
+            settingsPanel.insertAdjacentHTML('beforeend', htmlContent);
+            console.log('Prose Polisher settings HTML injected successfully.');
+
+            // --- Now, link UI elements to the config and add functionality ---
+
+            // 1. Static/Dynamic Fixes & Global Regex
+            setupCheckbox('prose_polisher_enable_static', false);
+            setupCheckbox('prose_polisher_enable_dynamic', false);
+            setupCheckbox('prose_polisher_enable_global_regex', true); // Default ON as per manifest
+
+            // 2. Dynamic Rule Generation Trigger
+            setupNumberInput('prose_polisher_dynamic_trigger', 30); // Default 30 as per manifest
+
+            // 3. Action Buttons (These will usually trigger modals or specific internal logic)
+            // For now, these are dummy functions showing where your actual logic would go.
+            setupButton('prose_polisher_open_navigator_button', () => {
+                SillyTavern.setInfoModal('Prose Polisher: Regex Navigator would open here.', 'Regex Navigator');
+                console.log('Prose Polisher: Open Regex Navigator clicked.');
+            });
+            setupButton('prose_polisher_manage_whitelist_button', () => {
+                SillyTavern.setInfoModal('Prose Polisher: Whitelist management would open here.', 'Manage Whitelist');
+                console.log('Prose Polisher: Manage Whitelist clicked.');
+            });
+            setupButton('prose_polisher_manage_blacklist_button', () => {
+                SillyTavern.setInfoModal('Prose Polisher: Blacklist management would open here.', 'Manage Blacklist');
+                console.log('Prose Polisher: Manage Blacklist clicked.');
+            });
+            setupButton('prose_polisher_clear_frequency_button', () => {
+                // In a real extension, you'd clear internal data structures here
+                SillyTavern.setInfoModal('Prose Polisher: Frequency data cleared (dummy action).', 'Clear Data');
+                console.log('Prose Polisher: Clear Frequency Data clicked.');
+            });
+            setupButton('prose_polisher_analyze_chat_button', () => {
+                SillyTavern.setInfoModal('Prose Polisher: Analyzing chat history (dummy action).', 'Analyze Chat');
+                console.log('Prose Polisher: Analyze Chat History clicked.');
+            });
+            setupButton('prose_polisher_view_frequency_button', () => {
+                SillyTavern.setInfoModal('Prose Polisher: Viewing frequency data (dummy action).', 'View Data');
+                console.log('Prose Polisher: View Frequency Data clicked.');
+            });
+            setupButton('prose_polisher_generate_rules_button', () => {
+                SillyTavern.setInfoModal('Prose Polisher: Generating AI rules (dummy action).', 'Generate Rules');
+                console.log('Prose Polisher: Generate AI Rules clicked.');
+            });
+
+            // 4. Project Gremlin Settings
+            setupCheckbox('pp_projectGremlinEnabled', false); // Default OFF
+
+            // Gremlin Role Checkboxes
+            setupCheckbox('pp_gremlinPapaEnabled', false);
+            setupCheckbox('pp_gremlinTwinsEnabled', false);
+            setupCheckbox('pp_gremlinMamaEnabled', false);
+            setupCheckbox('pp_gremlinAuditorEnabled', false);
+
+            // Gremlin Preset Selects
+            // Note: Populating these <select> elements dynamically with available presets
+            // would require additional logic (e.g., fetching presets from SillyTavern APIs
+            // or an internal list), which is beyond the scope of just displaying the HTML.
+            // For now, we only link their value saving.
+            setupSelect('pp_gremlinPapaPreset', ''); // Default empty
+            setupSelect('pp_gremlinTwinsPreset', '');
+            setupSelect('pp_gremlinMamaPreset', '');
+            setupSelect('pp_gremlinWriterPreset', ''); // Writer is always active, but its preset can be changed
+            setupSelect('pp_gremlinAuditorPreset', '');
+
+            // Gremlin Refinement Iterations
+            setupSelect('pp_gremlinTwinsIterations', '3'); // Default '3'
+
+            // Gremlin Control Buttons (Browse Presets, Select API, Edit Instructions)
+            // These would typically open new specialized modals provided by your extension.
+            // We'll use a generic handler for demonstration.
+            document.querySelectorAll('.pp-browse-gremlin-preset-btn').forEach(button => {
+                setupButton(button.id, () => {
+                    const targetSelectId = button.dataset.targetSelect;
+                    SillyTavern.setInfoModal(`Prose Polisher: Browsing presets for '${targetSelectId}' (dummy action).`, 'Browse Presets');
+                    console.log(`Prose Polisher: Browse Presets for ${targetSelectId} clicked.`);
+                });
+            });
+
+            document.querySelectorAll('.pp-select-api-btn').forEach(button => {
+                setupButton(button.id, () => {
+                    const gremlinRole = button.dataset.gremlinRole;
+                    SillyTavern.setInfoModal(`Prose Polisher: Selecting API/model for ${gremlinRole} Gremlin (dummy action).`, `Select API for ${gremlinRole}`);
+                    console.log(`Prose Polisher: Select API for ${gremlinRole} clicked.`);
+                    // In a real scenario, this would update the pp_gremlin<Role>Display span
+                    // and store the selected API/model in extensionConfig.
+                });
+            });
+
+            document.querySelectorAll('.pp-edit-instructions-btn').forEach(button => {
+                setupButton(button.id, () => {
+                    const gremlinRole = button.dataset.gremlinRole;
+                    SillyTavern.setInfoModal(`Prose Polisher: Editing instructions for ${gremlinRole} Gremlin (dummy action).`, `Edit Instructions for ${gremlinRole}`);
+                    console.log(`Prose Polisher: Edit Instructions for ${gremlinRole} clicked.`);
+                });
+            });
+
+            // Handle the inline drawer toggle logic
+            const inlineDrawerToggle = document.querySelector('.inline-drawer-toggle');
+            const inlineDrawerContent = document.querySelector('.inline-drawer-content');
+            if (inlineDrawerToggle && inlineDrawerContent) {
+                inlineDrawerToggle.addEventListener('click', () => {
+                    inlineDrawerContent.classList.toggle('open');
+                    inlineDrawerToggle.querySelector('.inline-drawer-icon').classList.toggle('down');
+                    inlineDrawerToggle.querySelector('.inline-drawer-icon').classList.toggle('up');
+                });
+                // Ensure initial state is closed (add 'open' class dynamically if needed)
+                inlineDrawerContent.classList.remove('open');
+            }
+
+
+        } catch (error) {
+            console.error('Prose Polisher: Failed to load settings HTML:', error);
+            // Display an error message in the UI if HTML fails to load
+            settingsPanel.insertAdjacentHTML('beforeend', `
+                <div style="color: red; padding: 10px; border: 1px solid red; margin-top: 10px;">
+                    <h3>Error Loading Prose Polisher Settings</h3>
+                    <p>Could not load settings UI. Please check the extension files and console for errors.</p>
+                    <p>Error: ${error.message}</p>
+                </div>
+            `);
+        }
+    } else {
+        console.error('Prose Polisher: Could not find #extension_settings_column to inject settings.');
+        SillyTavern.setInfoModal(
+            'The Prose Polisher extension could not find the settings panel in SillyTavern to display its UI.',
+            'Prose Polisher Error'
+        );
+    }
+
+    console.log('Prose Polisher extension initialized.');
+});
+
+// Any other core functionality (like message processing) would go here.
+// For example, if this extension processed messages:
+// SillyTavern.getContext().on('messageReceived', (data) => {
+//    if (extensionConfig.prose_polisher_enable_static) {
+//        // Apply static regex fixes
+//        data.text = data.text.replace(/(\b(?:really|very)\s+)+/gi, '$1'); // Example simple regex
+//    }
+//    // ... other processing
+// });
