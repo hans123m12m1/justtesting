@@ -1,0 +1,28 @@
+/* Style for the toggle button */
+#toggleAttachmentCleaner {
+    background-color: #007bff; /* Blue for enabled state */
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px; /* Space below the button */
+    width: fit-content; /* Adjust width based on content */
+    display: block; /* Make it a block element for better layout in settings */
+    transition: background-color 0.3s ease; /* Smooth transition for color change */
+}
+
+/* Style for the disabled state of the button */
+#toggleAttachmentCleaner.disabled {
+    background-color: #6c757d; /* Gray for disabled state */
+}
+
+/* Force hide any potential attachment containers that might still render */
+/* These are common classes SillyTavern uses for images/files */
+.message-attachment,
+.image-container,
+.file-attachment,
+.img_container {
+    display: none !important; /* !important overrides other styles */
+}
