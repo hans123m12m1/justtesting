@@ -1,0 +1,56 @@
+/* Styles for the Attachment Remover extension settings */
+
+/* Main container styles, mirroring prose-polisher-settings */
+.attachment-remover-settings .inline-drawer-toggle.inline-drawer-header {
+    background-color: var(--nemo-secondary-bg, #2a2a2a);
+    border: 1px solid var(--nemo-border-color, #444);
+    border-left: 4px solid var(--nemo-secondary-accent, #b592e0); /* A distinct color */
+    padding-left: 12px;
+    transition: background-color 0.2s ease;
+    margin-bottom: 5px; /* Space from other settings sections */
+}
+
+.attachment-remover-settings .inline-drawer-toggle.inline-drawer-header:hover {
+    background-color: var(--nemo-item-hover-bg, #333);
+}
+
+/* Content area styling */
+.attachment-remover-settings .inline-drawer-content {
+    padding: 10px 0 5px 0; /* Adjust padding as needed */
+}
+
+/* Ensure checkbox labels and descriptions look consistent */
+.attachment-remover-settings .form-group {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.attachment-remover-settings .checkbox_label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 5px; /* Space between checkbox items if more are added */
+}
+
+.attachment-remover-settings .checkbox_label input[type="checkbox"] {
+    margin-right: 8px; /* Space between checkbox and text */
+}
+
+.attachment-remover-settings .checkbox_label span {
+    font-size: 0.95em;
+    color: var(--text_color);
+}
+
+.attachment-remover-settings p,
+.attachment-remover-settings small {
+    color: var(--text_color_dim);
+    margin-top: 8px;
+    margin-bottom: 8px;
+    display: block; /* Ensure small tags take up full width */
+}
+
+.attachment-remover-settings hr {
+    border: none;
+    border-top: 1px solid var(--nemo-border-color, #444);
+    margin: 15px 0;
+}
