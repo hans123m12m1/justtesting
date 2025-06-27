@@ -1,103 +1,148 @@
-import { extension_settings } from "../../../scripts/shared.js";
+import { extension_settings, getContext, saveSettingsDebounced } from "../../../script.js";
+import { eventSource, event_types } from "../../../script.js";
+
+// --- EXTENSION METADATA ---
+const EXTENSION_NAME = 'attachment_remover';
+const EXTENSION_FOLDER_PATH = `scripts/extensions/${EXTENSION_NAME}`;
 
 // --- CONFIGURATION ---
 const CONFIG = {
     selectors: {
-        chatContainer: '#chat-log',
-        message: '.message',
-        attachment: '.attachment-preview',
-        aiMessage: '.ai-message'
+        // Updated selectors for modern SillyTavern versions
+        chatContainer: '#chat',
+        message: '.mes',
+        userMessage: '.mes[ch_name="user"], .mes[is_user="true"]',
+        aiMessage: '.mes[ch_name!="user"]:not([is_user="true"])',
+        attachment: '.mes_img, .attachment_holder, .mes_file, .inline_image, img[src*="user_uploads"]',
+        messageText: '.mes_text'
     },
     delays: {
-        processMessages: 150, // Delay before processing messages after a DOM change
-        retryObserver: 500,   // Delay before retrying to start the observer if chat container not found
-        debounce: 100         // Debounce delay for processing messages
+        processMessages: 200,
+        retryObserver: 1000,
+        debounce: 150,
+        settingsDebounce: 500
     },
     limits: {
-        maxHistoryCheck: 10 // Limit how far back we check for attachments in user messages
+        maxHistoryCheck: 15,
+        maxRetries: 3
     }
 };
 
 // --- EXTENSION STATE ---
-const SETTINGS_KEY = 'attachment_remover_settings';
+const SETTINGS_KEY = EXTENSION_NAME;
 const DEFAULT_SETTINGS = {
     enabled: false,
-    removeFromAllUserMessages: false, // Option to remove from all user messages or just the most recent
-    debugMode: false
+    removeFromAllUserMessages: false,
+    debugMode: false,
+    removeOnlyImages: false,
+    preserveFirstMessage: true,
+    autoCleanup: true
 };
 
 let settings = { ...DEFAULT_SETTINGS };
 let observer = null;
 let isProcessing = false;
 let debounceTimer = null;
+let retryCount = 0;
+let lastProcessedMessageCount = 0;
 
 // --- UTILITY FUNCTIONS ---
 /**
- * Logs messages to the console, respecting the debugMode setting.
- * @param {string} message - The message to log.
- * @param {'info' | 'debug' | 'warn' | 'error'} level - The log level.
+ * Enhanced logging with timestamps and better formatting
  */
 function log(message, level = 'info') {
-    if (!settings.debugMode && level === 'debug') return; // Skip debug logs if not in debug mode
-    const prefix = '[Attachment Remover]';
-    console[level](`${prefix} ${message}`);
+    if (!settings.debugMode && level === 'debug') return;
+    
+    const timestamp = new Date().toLocaleTimeString();
+    const prefix = `[${timestamp}] [Attachment Remover]`;
+    const styles = {
+        info: 'color: #4CAF50',
+        debug: 'color: #2196F3', 
+        warn: 'color: #FF9800',
+        error: 'color: #F44336'
+    };
+    
+    console[level](`%c${prefix} ${message}`, styles[level] || '');
 }
 
 /**
- * Debounces a function call.
- * @param {Function} func - The function to debounce.
- * @param {number} delay - The delay in milliseconds.
- * @returns {Function} - The debounced function.
+ * Enhanced debounce with immediate execution option
  */
-function debounce(func, delay) {
+function debounce(func, delay, immediate = false) {
     return function(...args) {
+        const callNow = immediate && !debounceTimer;
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => func.apply(this, args), delay);
+        debounceTimer = setTimeout(() => {
+            debounceTimer = null;
+            if (!immediate) func.apply(this, args);
+        }, delay);
+        if (callNow) func.apply(this, args);
     };
 }
 
 /**
- * Safely queries for a single DOM element.
- * @param {string} selector - The CSS selector.
- * @param {Element | Document} parent - The parent element to search within.
- * @returns {Element | null} - The found element or null.
+ * Safe DOM query with error handling and null checks
  */
-function safeQuerySelector(selector, parent = document) {
+function safeQuery(selector, parent = document, multiple = false) {
     try {
-        return parent.querySelector(selector);
+        if (!parent) return multiple ? [] : null;
+        const result = multiple ? parent.querySelectorAll(selector) : parent.querySelector(selector);
+        return result || (multiple ? [] : null);
     } catch (error) {
-        log(`Invalid selector "${selector}": ${error.message}`, 'error');
-        return null;
+        log(`Query error for "${selector}": ${error.message}`, 'error');
+        return multiple ? [] : null;
     }
 }
 
 /**
- * Safely queries for multiple DOM elements.
- * @param {string} selector - The CSS selector.
- * @param {Element | Document} parent - The parent element to search within.
- * @returns {NodeListOf<Element>} - A NodeList of found elements (can be empty).
+ * Check if element is visible and in viewport
  */
-function safeQuerySelectorAll(selector, parent = document) {
-    try {
-        return parent.querySelectorAll(selector);
-    } catch (error) {
-        log(`Invalid selector "${selector}": ${error.message}`, 'error');
-        return [];
-    }
+function isElementVisible(element) {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    return style.display !== 'none' && style.visibility !== 'hidden' && element.offsetParent !== null;
 }
 
-// --- CORE LOGIC ---
 /**
- * Removes attachment preview elements from a given message element.
- * @param {Element} message - The message DOM element.
- * @returns {number} - The count of attachments removed.
+ * Get message metadata for better processing
  */
-function removeAttachmentsFromMessage(message) {
-    const attachments = safeQuerySelectorAll(CONFIG.selectors.attachment, message);
+function getMessageInfo(messageElement) {
+    if (!messageElement) return null;
+    
+    return {
+        element: messageElement,
+        isUser: messageElement.hasAttribute('is_user') || messageElement.getAttribute('ch_name') === 'user',
+        isAI: !messageElement.hasAttribute('is_user') && messageElement.getAttribute('ch_name') !== 'user',
+        index: Array.from(messageElement.parentNode.children).indexOf(messageElement),
+        hasAttachments: safeQuery(CONFIG.selectors.attachment, messageElement, true).length > 0
+    };
+}
+
+// --- CORE ATTACHMENT REMOVAL LOGIC ---
+/**
+ * Enhanced attachment removal with better filtering
+ */
+function removeAttachmentsFromMessage(messageElement) {
+    if (!messageElement) return 0;
+    
+    const attachments = safeQuery(CONFIG.selectors.attachment, messageElement, true);
     let removedCount = 0;
-
+    
     attachments.forEach(attachment => {
         try {
+            // Skip if it's part of the message text content (like inline images in responses)
+            const messageText = safeQuery(CONFIG.selectors.messageText, messageElement);
+            if (messageText && messageText.contains(attachment)) {
+                log(`Skipping attachment in message text: ${attachment.tagName}`, 'debug');
+                return;
+            }
+            
+            // Additional filtering for image-only mode
+            if (settings.removeOnlyImages && !isImageAttachment(attachment)) {
+                log(`Skipping non-image attachment: ${attachment.tagName}`, 'debug');
+                return;
+            }
+            
             log(`Removing attachment: ${attachment.outerHTML.substring(0, 100)}...`, 'debug');
             attachment.remove();
             removedCount++;
@@ -105,369 +150,439 @@ function removeAttachmentsFromMessage(message) {
             log(`Failed to remove attachment: ${error.message}`, 'error');
         }
     });
-
+    
     return removedCount;
 }
 
 /**
- * Checks if a message element is an AI message.
- * @param {Element} message - The message DOM element.
- * @returns {boolean} - True if it's an AI message, false otherwise.
+ * Check if attachment is an image
  */
-function isAIMessage(message) {
-    return message.matches(CONFIG.selectors.aiMessage);
+function isImageAttachment(element) {
+    if (!element) return false;
+    
+    const tagName = element.tagName.toLowerCase();
+    const className = element.className || '';
+    const src = element.src || '';
+    
+    return tagName === 'img' || 
+           className.includes('mes_img') || 
+           className.includes('inline_image') ||
+           src.includes('user_uploads');
 }
 
 /**
- * Processes new messages in the chat log to remove attachments.
- * This function is debounced and triggered by the MutationObserver.
+ * Enhanced message processing with better logic
  */
 function processNewMessages() {
     if (!settings.enabled || isProcessing) {
         log('Processing skipped - disabled or already processing', 'debug');
         return;
     }
-
-    isProcessing = true; // Set flag to prevent re-entry
-
+    
+    isProcessing = true;
+    
     try {
-        const chatContainer = safeQuerySelector(CONFIG.selectors.chatContainer);
+        const chatContainer = safeQuery(CONFIG.selectors.chatContainer);
         if (!chatContainer) {
-            log('Chat container not found, cannot process messages.', 'debug');
+            log('Chat container not found', 'debug');
+            retryObserver();
             return;
         }
-
-        const messages = Array.from(safeQuerySelectorAll(CONFIG.selectors.message, chatContainer));
-        // Need at least one user message and the subsequent AI message to process
+        
+        const messages = Array.from(safeQuery(CONFIG.selectors.message, chatContainer, true));
+        const currentMessageCount = messages.length;
+        
+        // Only process if there are new messages
+        if (currentMessageCount <= lastProcessedMessageCount) {
+            log('No new messages to process', 'debug');
+            return;
+        }
+        
+        lastProcessedMessageCount = currentMessageCount;
+        
         if (messages.length < 2) {
-            log('Not enough messages to process (at least one user message and one AI message needed).', 'debug');
+            log('Need at least 2 messages to process', 'debug');
             return;
         }
-
+        
         const lastMessage = messages[messages.length - 1];
-        if (!isAIMessage(lastMessage)) {
-            log('Last message is not from AI, skipping attachment removal as AI has not responded yet.', 'debug');
+        const lastMessageInfo = getMessageInfo(lastMessage);
+        
+        if (!lastMessageInfo || !lastMessageInfo.isAI) {
+            log('Last message is not from AI, waiting for response', 'debug');
             return;
         }
-
-        log('AI response detected. Checking for attachments to remove from preceding user messages...');
-
+        
+        log('AI response detected, processing attachments...');
+        
         let totalRemoved = 0;
-        // Start checking from the message *before* the last AI message (messages.length - 2)
-        // and go backwards, up to CONFIG.limits.maxHistoryCheck messages or the very start of the chat.
-        const startIndex = messages.length - 2;
-        const endIndex = Math.max(0, messages.length - 1 - CONFIG.limits.maxHistoryCheck);
-
-        for (let i = startIndex; i >= endIndex; i--) {
+        let processedMessages = 0;
+        
+        // Process messages backwards from the second-to-last message
+        for (let i = messages.length - 2; i >= 0; i--) {
             const currentMessage = messages[i];
-
-            // If we encounter another AI message while scanning backwards, it signifies a new "turn".
-            // We stop here to avoid removing attachments from previous, already-responded-to turns.
-            if (isAIMessage(currentMessage)) {
-                log(`Hit previous AI message at index ${i}, stopping scan for attachments in older turns.`, 'debug');
+            const messageInfo = getMessageInfo(currentMessage);
+            
+            if (!messageInfo) continue;
+            
+            // Stop at previous AI message (end of current turn)
+            if (messageInfo.isAI) {
+                log(`Reached previous AI message at index ${i}, stopping`, 'debug');
                 break;
             }
-
-            // This is a user message, so process it for attachments.
-            const removedCount = removeAttachmentsFromMessage(currentMessage);
-            totalRemoved += removedCount;
-
-            if (removedCount > 0) {
-                log(`Removed ${removedCount} attachment(s) from user message at index ${i}.`);
-            } else {
-                log(`No attachments found in user message at index ${i}.`, 'debug');
+            
+            // Skip first message if preservation is enabled
+            if (settings.preserveFirstMessage && i === 0) {
+                log('Preserving first message as configured', 'debug');
+                continue;
             }
-
-            // *** FIX: ***
-            // If the setting is to remove only from the most recent user messages, we stop after processing
-            // the very first user message we encounter, regardless of whether it had an attachment.
-            if (!settings.removeFromAllUserMessages) {
-                log('Setting "Remove from all user messages" is off, stopping after first user message in turn.', 'debug');
+            
+            // Process user message
+            if (messageInfo.isUser && messageInfo.hasAttachments) {
+                const removedCount = removeAttachmentsFromMessage(currentMessage);
+                totalRemoved += removedCount;
+                processedMessages++;
+                
+                if (removedCount > 0) {
+                    log(`Removed ${removedCount} attachment(s) from message ${i}`);
+                }
+                
+                // Stop if only processing most recent user message
+                if (!settings.removeFromAllUserMessages) {
+                    log('Processing only most recent user message, stopping', 'debug');
+                    break;
+                }
+            }
+            
+            // Safety limit
+            if (processedMessages >= CONFIG.limits.maxHistoryCheck) {
+                log('Reached processing limit, stopping', 'debug');
                 break;
             }
         }
-
+        
         if (totalRemoved > 0) {
-            log(`Total attachments removed in this turn: ${totalRemoved}.`);
+            log(`Successfully removed ${totalRemoved} attachments from ${processedMessages} messages`);
+            
+            // Trigger save if auto-cleanup is enabled
+            if (settings.autoCleanup) {
+                setTimeout(() => {
+                    eventSource.emit(event_types.MESSAGE_UPDATED);
+                }, 100);
+            }
         } else {
-            log('No attachments found or removed in this turn.', 'debug');
+            log('No attachments found to remove', 'debug');
         }
-
+        
+        retryCount = 0; // Reset retry count on successful processing
+        
     } catch (error) {
         log(`Error processing messages: ${error.message}`, 'error');
+        retryCount++;
+        
+        if (retryCount < CONFIG.limits.maxRetries) {
+            setTimeout(() => processNewMessages(), CONFIG.delays.processMessages * retryCount);
+        }
     } finally {
-        isProcessing = false; // Reset processing flag
+        isProcessing = false;
     }
 }
 
-// --- DOM OBSERVER ---
+// --- OBSERVER MANAGEMENT ---
 const debouncedProcessMessages = debounce(processNewMessages, CONFIG.delays.debounce);
 
 /**
- * Creates and returns a new MutationObserver instance.
- * Disconnects any existing observer first.
- * @returns {MutationObserver} - The new observer instance.
+ * Enhanced mutation observer with better change detection
  */
 function createObserver() {
     if (observer) {
         observer.disconnect();
-        log('Existing observer disconnected.', 'debug');
+        log('Disconnected existing observer', 'debug');
     }
-
+    
     observer = new MutationObserver(mutations => {
         let shouldProcess = false;
-
+        
         for (const mutation of mutations) {
-            // Check for added nodes in the chat container (new messages or message content)
             if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                 for (const node of mutation.addedNodes) {
-                    // Check if the added node is a message itself or contains a message
-                    if (node.nodeType === Node.ELEMENT_NODE &&
-                        (node.matches(CONFIG.selectors.message) ||
-                         node.querySelector(CONFIG.selectors.message))) {
-                        shouldProcess = true;
-                        break;
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Check if it's a message or contains messages
+                        if (node.matches && node.matches(CONFIG.selectors.message)) {
+                            shouldProcess = true;
+                            break;
+                        }
+                        if (safeQuery(CONFIG.selectors.message, node)) {
+                            shouldProcess = true;
+                            break;
+                        }
                     }
                 }
             }
-            if (shouldProcess) break; // If we found a message addition, no need to check further mutations
+            
+            // Also watch for attribute changes that might indicate message updates
+            if (mutation.type === 'attributes' && 
+                mutation.target.matches && 
+                mutation.target.matches(CONFIG.selectors.message)) {
+                shouldProcess = true;
+            }
+            
+            if (shouldProcess) break;
         }
-
+        
         if (shouldProcess) {
-            log('DOM changes detected (new message likely added), scheduling message processing.', 'debug');
-            // Use setTimeout to allow DOM to settle before processing
+            log('DOM changes detected, scheduling processing', 'debug');
             setTimeout(debouncedProcessMessages, CONFIG.delays.processMessages);
         }
     });
-
+    
     return observer;
 }
 
 /**
- * Attempts to start the MutationObserver on the chat container.
- * Retries if the container is not immediately available.
- * @returns {boolean} - True if observer started, false if retrying.
+ * Enhanced observer startup with retry logic
  */
 function startObserver() {
-    const chatContainer = safeQuerySelector(CONFIG.selectors.chatContainer);
-
+    const chatContainer = safeQuery(CONFIG.selectors.chatContainer);
+    
     if (chatContainer) {
         createObserver();
         observer.observe(chatContainer, {
-            childList: true, // Observe direct children additions/removals
-            subtree: true    // Observe changes in descendants as well
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'is_user', 'ch_name']
         });
-        log('Observer started successfully on chat container.');
-        // Immediately try to process existing messages when observer starts
+        
+        log('Observer started successfully');
+        
+        // Process existing messages
         setTimeout(debouncedProcessMessages, CONFIG.delays.processMessages);
         return true;
     } else {
-        log(`Chat container "${CONFIG.selectors.chatContainer}" not found, retrying in ${CONFIG.delays.retryObserver}ms...`, 'debug');
-        setTimeout(startObserver, CONFIG.delays.retryObserver);
+        log(`Chat container not found, retrying in ${CONFIG.delays.retryObserver}ms`, 'debug');
+        retryObserver();
         return false;
     }
 }
 
-/**
- * Stops the current MutationObserver.
- */
+function retryObserver() {
+    if (retryCount < CONFIG.limits.maxRetries) {
+        retryCount++;
+        setTimeout(startObserver, CONFIG.delays.retryObserver * retryCount);
+    } else {
+        log('Max retries reached, observer startup failed', 'error');
+    }
+}
+
 function stopObserver() {
     if (observer) {
         observer.disconnect();
         observer = null;
-        log('Observer stopped.');
+        log('Observer stopped');
     }
+    retryCount = 0;
 }
 
 // --- SETTINGS MANAGEMENT ---
-/**
- * Saves the current extension settings to SillyTavern's extension_settings.
- */
 function saveSettings() {
     try {
         extension_settings[SETTINGS_KEY] = { ...settings };
+        saveSettingsDebounced();
         log(`Settings saved: ${JSON.stringify(settings)}`, 'debug');
     } catch (error) {
         log(`Failed to save settings: ${error.message}`, 'error');
     }
 }
 
-/**
- * Loads extension settings from SillyTavern's extension_settings,
- * falling back to default settings if none are found or an error occurs.
- */
 function loadSettings() {
     try {
         const savedSettings = extension_settings[SETTINGS_KEY];
         if (savedSettings && typeof savedSettings === 'object') {
-            // Merge saved settings with defaults to ensure all keys are present
             settings = { ...DEFAULT_SETTINGS, ...savedSettings };
             log(`Settings loaded: ${JSON.stringify(settings)}`, 'debug');
         } else {
-            log('No saved settings found, using default settings.', 'debug');
+            log('No saved settings found, using defaults', 'debug');
             settings = { ...DEFAULT_SETTINGS };
         }
     } catch (error) {
-        log(`Failed to load settings: ${error.message}, falling back to default settings.`, 'error');
+        log(`Failed to load settings: ${error.message}`, 'error');
         settings = { ...DEFAULT_SETTINGS };
     }
 }
 
-/**
- * Handles changes to the settings checkboxes in the UI.
- * Updates internal settings, saves them, and manages the observer state.
- */
+const debouncedSaveSettings = debounce(saveSettings, CONFIG.delays.settingsDebounce);
+
 function onSettingsChange() {
     try {
-        const enabledCheckbox = document.getElementById('attachment_remover_enable');
-        const allMessagesCheckbox = document.getElementById('attachment_remover_all_messages');
-        const debugCheckbox = document.getElementById('attachment_remover_debug');
-
-        if (enabledCheckbox) {
-            settings.enabled = enabledCheckbox.checked;
-            // Start/stop observer based on enabled state
-            if (settings.enabled) {
-                log('Extension enabled. Attempting to start observer...');
+        const elements = {
+            enabled: document.getElementById('attachment_remover_enable'),
+            allMessages: document.getElementById('attachment_remover_all_messages'),
+            debug: document.getElementById('attachment_remover_debug'),
+            imagesOnly: document.getElementById('attachment_remover_images_only'),
+            preserveFirst: document.getElementById('attachment_remover_preserve_first'),
+            autoCleanup: document.getElementById('attachment_remover_auto_cleanup')
+        };
+        
+        // Update settings from UI
+        if (elements.enabled) {
+            const wasEnabled = settings.enabled;
+            settings.enabled = elements.enabled.checked;
+            
+            if (settings.enabled && !wasEnabled) {
+                log('Extension enabled, starting observer');
                 startObserver();
-            } else {
-                log('Extension disabled. Stopping observer...');
+            } else if (!settings.enabled && wasEnabled) {
+                log('Extension disabled, stopping observer');
                 stopObserver();
             }
-        } else {
-            log('Enabled checkbox element not found during change event!', 'error');
         }
-
-        if (allMessagesCheckbox) {
-            settings.removeFromAllUserMessages = allMessagesCheckbox.checked;
-        } else {
-            log('Remove from all messages checkbox element not found during change event!', 'error');
+        
+        if (elements.allMessages) {
+            settings.removeFromAllUserMessages = elements.allMessages.checked;
         }
-
-        if (debugCheckbox) {
-            settings.debugMode = debugCheckbox.checked;
-        } else {
-            log('Debug mode checkbox element not found during change event!', 'error');
+        
+        if (elements.debug) {
+            settings.debugMode = elements.debug.checked;
         }
-
-        saveSettings();
-        log(`Settings updated - Enabled: ${settings.enabled}, Remove From All User Messages: ${settings.removeFromAllUserMessages}, Debug Mode: ${settings.debugMode}`);
-
+        
+        if (elements.imagesOnly) {
+            settings.removeOnlyImages = elements.imagesOnly.checked;
+        }
+        
+        if (elements.preserveFirst) {
+            settings.preserveFirstMessage = elements.preserveFirst.checked;
+        }
+        
+        if (elements.autoCleanup) {
+            settings.autoCleanup = elements.autoCleanup.checked;
+        }
+        
+        debouncedSaveSettings();
+        log(`Settings updated: ${JSON.stringify(settings)}`, 'debug');
+        
     } catch (error) {
         log(`Error updating settings: ${error.message}`, 'error');
     }
 }
 
 // --- SETTINGS UI ---
-/**
- * Renders the extension's settings UI into the provided div element.
- * Loads settings.html and styles.css, then connects UI elements to settings.
- * @param {HTMLDivElement} div - The div element to render the settings into.
- */
-function onSettingsDivRender(div) {
-    const settingsHtmlPath = `extensions/attachment_remover/settings.html`;
-    const settingsCssPath = `extensions/attachment_remover/styles.css`;
+async function loadSettingsHtml() {
+    try {
+        const response = await fetch(`${EXTENSION_FOLDER_PATH}/settings.html`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return await response.text();
+    } catch (error) {
+        log(`Failed to load settings HTML: ${error.message}`, 'error');
+        return null;
+    }
+}
 
-    // Load CSS file if not already present
-    const existingLink = document.querySelector(`link[href="${settingsCssPath}"]`);
+function loadSettingsCss() {
+    const cssPath = `${EXTENSION_FOLDER_PATH}/styles.css`;
+    const existingLink = document.querySelector(`link[href="${cssPath}"]`);
+    
     if (!existingLink) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = settingsCssPath;
-        link.onerror = () => log(`Failed to load CSS file from ${settingsCssPath}. Check file path.`, 'error');
+        link.href = cssPath;
+        link.onerror = () => log(`Failed to load CSS: ${cssPath}`, 'error');
         document.head.appendChild(link);
-        log(`CSS file "${settingsCssPath}" appended to document head.`, 'debug');
-    } else {
-        log(`CSS file "${settingsCssPath}" already loaded.`, 'debug');
+        log('CSS loaded successfully', 'debug');
     }
-
-    // Load HTML content for the settings panel
-    fetch(settingsHtmlPath)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.text();
-        })
-        .then(html => {
-            div.innerHTML = html;
-
-            // Connect UI elements (checkboxes) to their respective settings and event listeners
-            const enabledCheckbox = document.getElementById('attachment_remover_enable');
-            const allMessagesCheckbox = document.getElementById('attachment_remover_all_messages');
-            const debugCheckbox = document.getElementById('attachment_remover_debug');
-
-            if (enabledCheckbox) {
-                enabledCheckbox.checked = settings.enabled;
-                enabledCheckbox.addEventListener('change', onSettingsChange);
-                log('Enabled checkbox initialized and event listener attached.', 'debug');
-            } else {
-                log('Error: "attachment_remover_enable" checkbox element not found in settings.html!', 'error');
-            }
-
-            if (allMessagesCheckbox) {
-                allMessagesCheckbox.checked = settings.removeFromAllUserMessages;
-                allMessagesCheckbox.addEventListener('change', onSettingsChange);
-                log('Remove from all messages checkbox initialized and event listener attached.', 'debug');
-            } else {
-                log('Error: "attachment_remover_all_messages" checkbox element not found in settings.html!', 'error');
-            }
-
-            if (debugCheckbox) {
-                debugCheckbox.checked = settings.debugMode;
-                debugCheckbox.addEventListener('change', onSettingsChange);
-                log('Debug mode checkbox initialized and event listener attached.', 'debug');
-            } else {
-                log('Error: "attachment_remover_debug" checkbox element not found in settings.html!', 'error');
-            }
-
-            log('Settings UI loaded successfully.');
-        })
-        .catch(error => {
-            log(`Failed to load settings HTML from ${settingsHtmlPath}: ${error.message}. Please ensure the file exists.`, 'error');
-            div.innerHTML = `
-                <div class="attachment-remover-error">
-                    <h4>Attachment Remover Settings</h4>
-                    <p>Error loading settings interface: ${error.message}</p>
-                    <p>Please check that the <code>settings.html</code> file exists in the <code>extensions/attachment_remover/</code> directory.</p>
-                </div>
-            `;
-        });
 }
 
-// --- CLEANUP ---
-/**
- * Performs cleanup operations when the extension is unloaded or the page changes.
- */
+async function onSettingsDivRender(div) {
+    loadSettingsCss();
+    
+    const html = await loadSettingsHtml();
+    if (!html) {
+        div.innerHTML = `
+            <div class="attachment-remover-error">
+                <h4>Attachment Remover Settings</h4>
+                <p>Failed to load settings interface. Please check that settings.html exists.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    div.innerHTML = html;
+    
+    // Initialize all checkboxes
+    const checkboxes = {
+        attachment_remover_enable: settings.enabled,
+        attachment_remover_all_messages: settings.removeFromAllUserMessages,
+        attachment_remover_debug: settings.debugMode,
+        attachment_remover_images_only: settings.removeOnlyImages,
+        attachment_remover_preserve_first: settings.preserveFirstMessage,
+        attachment_remover_auto_cleanup: settings.autoCleanup
+    };
+    
+    Object.entries(checkboxes).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.checked = value;
+            element.addEventListener('change', onSettingsChange);
+            log(`Initialized ${id} checkbox`, 'debug');
+        } else {
+            log(`Checkbox ${id} not found in HTML`, 'error');
+        }
+    });
+    
+    log('Settings UI initialized successfully');
+}
+
+// --- CLEANUP AND INITIALIZATION ---
 function cleanup() {
     stopObserver();
     clearTimeout(debounceTimer);
-    log('Extension cleaned up successfully.');
+    log('Extension cleaned up');
+}
+
+// --- EVENT HANDLERS ---
+function onChatChanged() {
+    if (settings.enabled) {
+        log('Chat changed, restarting observer');
+        stopObserver();
+        setTimeout(startObserver, CONFIG.delays.processMessages);
+    }
+}
+
+function onMessageDeleted() {
+    lastProcessedMessageCount = Math.max(0, lastProcessedMessageCount - 1);
 }
 
 // --- INITIALIZATION ---
-(function() {
+jQuery(async () => {
     try {
         log('Initializing Attachment Remover extension...');
-        // Load settings first so they are available immediately
+        
         loadSettings();
-
-        // Register the function that renders the extension's settings UI
-        this.onSettingsDivRender = onSettingsDivRender;
-
-        // If the extension was enabled in previous session, try to start the observer
+        
+        // Register settings UI renderer
+        window[`${EXTENSION_NAME}_settings`] = onSettingsDivRender;
+        
+        // Register event listeners
+        eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
+        eventSource.on(event_types.MESSAGE_DELETED, onMessageDeleted);
+        
+        // Start observer if enabled
         if (settings.enabled) {
-            log('Extension was enabled, attempting to start observer...');
+            log('Extension enabled, starting observer');
             startObserver();
-        } else {
-            log('Extension is disabled, observer will not start automatically. Enable it in settings if needed.');
         }
-
-        // Register cleanup function to run before the page unloads
+        
+        // Cleanup on page unload
         window.addEventListener('beforeunload', cleanup);
-
-        log('Attachment Remover extension initialized successfully.');
-
+        
+        log('Attachment Remover extension initialized successfully');
+        
     } catch (error) {
         log(`Initialization failed: ${error.message}`, 'error');
     }
-}).call(this); // Call the self-executing function with 'this' context for SillyTavern registration
+});
+
+// Export for SillyTavern
+export { onSettingsDivRender };

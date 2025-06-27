@@ -1,34 +1,137 @@
 <div class="attachment-remover-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b>Attachment Remover</b>
+            <b>🗑️ Attachment Remover</b>
             <div class="inline-drawer-icon fa-solid fa-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content">
-            <p>Automatically removes user-sent image/file attachments from the chat once the AI has sent its response. This helps keep the chat log clean.</p>
+            <div class="attachment-remover-description">
+                <p>Automatically removes user-sent image/file attachments from the chat after the AI responds. Keeps your chat log clean and reduces memory usage.</p>
+            </div>
+            
             <hr>
+            
+            <!-- Main Enable/Disable -->
             <div class="form-group">
-                <label class="checkbox_label">
+                <label class="checkbox_label" for="attachment_remover_enable">
                     <input type="checkbox" id="attachment_remover_enable">
-                    <span><b>Enable Attachment Removal:</b> Activates the feature to remove attachments from the chat.</span>
+                    <span class="setting-title">
+                        <strong>🔧 Enable Attachment Removal</strong>
+                        <small>Activates the automatic attachment removal feature</small>
+                    </span>
                 </label>
             </div>
-            <div class="form-group">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="attachment_remover_all_messages">
-                    <span><b>Remove from all user messages:</b> If enabled, attachments will be removed from all prior user messages in the current conversation segment, not just the most recent one.</span>
-                </label>
-            </div>
-            <div class="form-group">
-                <label class="checkbox_label">
-                    <input type="checkbox" id="attachment_remover_debug">
-                    <span><b>Enable Debug Mode:</b> Shows detailed log messages in the browser console (press F12 to open Developer Tools).</span>
-                </label>
-            </div>
+            
             <hr>
-            <small>
-                <b>THIS IS IMPORTANT:</b> If attachments are NOT disappearing, you MUST adjust the CSS selectors at the top of the <code>index.js</code> file (in the <code>CONFIG.selectors</code> object) to match your specific SillyTavern version's HTML structure. Use your browser's F12 developer tools to "Inspect" the chat elements (e.g., messages and attachment previews) to find the correct class names or IDs.
-            </small>
+            
+            <!-- Removal Scope Options -->
+            <div class="form-group">
+                <label class="checkbox_label" for="attachment_remover_all_messages">
+                    <input type="checkbox" id="attachment_remover_all_messages">
+                    <span class="setting-title">
+                        <strong>📝 Remove from All User Messages</strong>
+                        <small>If enabled, removes attachments from all user messages in the current conversation turn. If disabled, only removes from the most recent user message.</small>
+                    </span>
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label class="checkbox_label" for="attachment_remover_images_only">
+                    <input type="checkbox" id="attachment_remover_images_only">
+                    <span class="setting-title">
+                        <strong>🖼️ Remove Images Only</strong>
+                        <small>Only remove image attachments, leave other file types (documents, audio, etc.) intact</small>
+                    </span>
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label class="checkbox_label" for="attachment_remover_preserve_first">
+                    <input type="checkbox" id="attachment_remover_preserve_first">
+                    <span class="setting-title">
+                        <strong>🛡️ Preserve First Message</strong>
+                        <small>Never remove attachments from the very first message in the conversation</small>
+                    </span>
+                </label>
+            </div>
+            
+            <hr>
+            
+            <!-- Advanced Options -->
+            <div class="attachment-remover-advanced">
+                <h4>⚙️ Advanced Options</h4>
+                
+                <div class="form-group">
+                    <label class="checkbox_label" for="attachment_remover_auto_cleanup">
+                        <input type="checkbox" id="attachment_remover_auto_cleanup">
+                        <span class="setting-title">
+                            <strong>🧹 Auto Cleanup</strong>
+                            <small>Automatically trigger chat save/cleanup after removing attachments</small>
+                        </span>
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox_label" for="attachment_remover_debug">
+                        <input type="checkbox" id="attachment_remover_debug">
+                        <span class="setting-title">
+                            <strong>🐛 Debug Mode</strong>
+                            <small>Show detailed logging in browser console (F12 → Console tab)</small>
+                        </span>
+                    </label>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <!-- Help Section -->
+            <div class="attachment-remover-help">
+                <h4>❓ Troubleshooting</h4>
+                <details>
+                    <summary><strong>Attachments not disappearing?</strong></summary>
+                    <div class="help-content">
+                        <p><strong>Common solutions:</strong></p>
+                        <ul>
+                            <li>Make sure the extension is <strong>enabled</strong> above</li>
+                            <li>Check that you're using a supported SillyTavern version</li>
+                            <li>Enable <strong>Debug Mode</strong> and check browser console (F12) for errors</li>
+                            <li>Try refreshing the page and re-enabling the extension</li>
+                        </ul>
+                        
+                        <p><strong>For developers:</strong></p>
+                        <p>If attachments still aren't being removed, the CSS selectors in the extension may need updating for your SillyTavern version. Check the <code>CONFIG.selectors</code> object in <code>index.js</code> and update the selectors to match your HTML structure.</p>
+                        
+                        <p><strong>Current selectors:</strong></p>
+                        <code class="selector-code">
+                            chatContainer: '#chat'<br>
+                            message: '.mes'<br>
+                            attachment: '.mes_img, .attachment_holder, .mes_file, .inline_image, img[src*="user_uploads"]'
+                        </code>
+                    </div>
+                </details>
+                
+                <details>
+                    <summary><strong>How does it work?</strong></summary>
+                    <div class="help-content">
+                        <p>The extension monitors the chat for new AI messages. When an AI responds, it automatically scans backwards through recent user messages and removes any attachments it finds. This keeps your chat history clean while preserving the conversation text.</p>
+                        
+                        <p><strong>Processing order:</strong></p>
+                        <ol>
+                            <li>AI sends a response</li>
+                            <li>Extension identifies the conversation "turn"</li>
+                            <li>Scans user messages in that turn (backwards from most recent)</li>
+                            <li>Removes attachments based on your settings</li>
+                            <li>Stops at the previous AI message or conversation start</li>
+                        </ol>
+                    </div>
+                </details>
+            </div>
+            
+            <div class="attachment-remover-footer">
+                <small>
+                    <strong>💡 Tip:</strong> Enable debug mode if you're experiencing issues. The console logs will help identify what's happening.
+                </small>
+            </div>
         </div>
     </div>
 </div>
