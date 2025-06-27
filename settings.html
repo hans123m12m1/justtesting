@@ -10,12 +10,24 @@
             <div class="form-group">
                 <label class="checkbox_label">
                     <input type="checkbox" id="attachment_remover_enable">
-                    <span><b>Enable Attachment Removal:</b> Activates the feature to remove attachments.</span>
+                    <span><b>Enable Attachment Removal:</b> Activates the feature to remove attachments from the chat.</span>
+                </label>
+            </div>
+            <div class="form-group">
+                <label class="checkbox_label">
+                    <input type="checkbox" id="attachment_remover_all_messages">
+                    <span><b>Remove from all user messages:</b> If enabled, attachments will be removed from all prior user messages in the current conversation segment, not just the most recent one.</span>
+                </label>
+            </div>
+            <div class="form-group">
+                <label class="checkbox_label">
+                    <input type="checkbox" id="attachment_remover_debug">
+                    <span><b>Enable Debug Mode:</b> Shows detailed log messages in the browser console (press F12 to open Developer Tools).</span>
                 </label>
             </div>
             <hr>
             <small>
-                <b>THIS IS IMPORTANT:</b> If attachments are NOT disappearing, you MUST adjust the CSS selectors at the top of the <code>index.js</code> file to match your SillyTavern version's HTML structure. Use your browser's F12 developer tools to "Inspect" the chat elements.
+                <b>THIS IS IMPORTANT:</b> If attachments are NOT disappearing, you MUST adjust the CSS selectors at the top of the <code>index.js</code> file (in the <code>CONFIG.selectors</code> object) to match your specific SillyTavern version's HTML structure. Use your browser's F12 developer tools to "Inspect" the chat elements (e.g., messages and attachment previews) to find the correct class names or IDs.
             </small>
         </div>
     </div>

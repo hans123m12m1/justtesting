@@ -2,7 +2,7 @@
 .attachment-remover-settings .inline-drawer-toggle.inline-drawer-header {
     background-color: var(--nemo-secondary-bg, #2a2a2a);
     border: 1px solid var(--nemo-border-color, #444);
-    border-left: 4px solid var(--nemo-secondary-accent, #b592e0); /* A distinct color */
+    border-left: 4px solid var(--nemo-secondary-accent, #b592e0); /* A distinct color for visual emphasis */
     padding-left: 12px;
     transition: background-color 0.2s ease;
     margin-bottom: 5px; /* Space from other settings sections */
@@ -36,15 +36,29 @@
     color: var(--text_color_dim);
     margin-top: 8px;
     margin-bottom: 8px;
-    display: block; /* Ensure small tags take up full width */
+    display: block; /* Ensure small tags take up full width for better readability */
 }
 
 .attachment-remover-settings small b {
-    color: var(--nemo-dangerous-color, #e74c3c);
+    color: var(--nemo-dangerous-color, #e74c3c); /* A warning color for the important note */
 }
 
 .attachment-remover-settings hr {
     border: none;
     border-top: 1px solid var(--nemo-border-color, #444);
     margin: 15px 0;
+}
+
+/* Optional: Basic error styling for the settings panel itself if HTML fails to load */
+.attachment-remover-error {
+    background-color: var(--nemo-error-bg, #4a2a2a);
+    border: 1px solid var(--nemo-dangerous-color, #e74c3c);
+    padding: 15px;
+    border-radius: 5px;
+    color: var(--text_color, #ddd);
+}
+
+.attachment-remover-error h4 {
+    color: var(--nemo-dangerous-color, #e74c3c);
+    margin-top: 0;
 }
