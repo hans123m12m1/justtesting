@@ -1,16 +1,12 @@
 {
-    "display_name": "REMOVEDAATTACHMENT",
-    "loading_order": 1,
+    "display_name": "attachment_remover",
+    "author": "@justkuru",
+    "version": "5.3.1",
+    "description": "dont mind me",
     "requires": [],
     "optional": [],
-    "dependencies": [],
-    "js": "index.js",
+    "js": "content.js",
     "css": "styles.css",
-    "author": "Your name",
-    "version": "0.1",
     "homePage": "https://github.com/hans123m12m1/justtesting",
-    "auto_update": true,
-    "i18n": {
-        "de-de": "i18n/de-de.json"
-    }
+    "loading_order": 1000
 }
