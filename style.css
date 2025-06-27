@@ -1,323 +1,537 @@
-/* Enhanced styles for the Attachment Remover extension */
-
-/* Main container styling */
-.attachment-remover-settings {
-    font-family: var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+/* style.css */
+:root {
+    --primary: #8a5cf5;
+    --primary-dark: #6a40d0;
+    --background: #1e1e2e;
+    --card-bg: #252538;
+    --text: #f0f0f5;
+    --text-secondary: #b0b0c0;
+    --border: #3a3a55;
+    --success: #4caf50;
+    --danger: #f44336;
+    --warning: #ff9800;
+    --transition: all 0.3s ease;
 }
 
-/* Header styling with improved visual hierarchy */
-.attachment-remover-settings .inline-drawer-toggle.inline-drawer-header {
-    background: linear-gradient(135deg, var(--SmartThemeBodyColor, #2a2a2a) 0%, rgba(42, 42, 42, 0.8) 100%);
-    border: 1px solid var(--SmartThemeBorderColor, #444);
-    border-left: 4px solid var(--SmartThemeQuoteColor, #b592e0);
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.attachment-remover-settings .inline-drawer-toggle.inline-drawer-header:hover {
-    background: linear-gradient(135deg, var(--SmartThemeBodyColor, #333) 0%, rgba(51, 51, 51, 0.8) 100%);
-    border-left-color: var(--SmartThemeQuoteColor, #c9a3f0);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Content area styling */
-.attachment-remover-settings .inline-drawer-content {
-    padding: 16px;
-    background: var(--SmartThemeBodyColor, rgba(42, 42, 42, 0.5));
-    border-radius: 0 0 6px 6px;
-    margin-top: -8px;
-}
-
-/* Description section */
-.attachment-remover-description {
-    background: rgba(181, 146, 224, 0.1);
-    border: 1px solid rgba(181, 146, 224, 0.3);
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 16px;
-}
-
-.attachment-remover-description p {
+* {
     margin: 0;
-    color: var(--SmartThemeEmColor, #e0e0e0);
-    line-height: 1.5;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Form groups and spacing */
-.attachment-remover-settings .form-group {
-    margin: 16px 0;
-    padding: 8px 0;
+body {
+    background: var(--background);
+    color: var(--text);
+    padding: 20px;
+    min-height: 100vh;
 }
 
-/* Enhanced checkbox styling */
-.attachment-remover-settings .checkbox_label {
-    display: flex;
-    align-items: flex-start;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 4px;         transition: background-color 0.2s ease;
-    gap: 12px;
-}
-
-.attachment-remover-settings .checkbox_label:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.attachment-remover-settings .checkbox_label input[type="checkbox"] {
-    margin: 0;
-    min-width: 16px;
-    height: 16px;
-    accent-color: var(--SmartThemeQuoteColor, #b592e0);
-    cursor: pointer;
-    margin-top: 2px; /* Align with text */
-}
-
-/* Setting title and description styling */
-.attachment-remover-settings .setting-title {
+.extension-container {
+    max-width: 1000px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    flex: 1;
+    gap: 25px;
 }
 
-.attachment-remover-settings .setting-title strong {
-    color: var(--SmartThemeEmColor, #f0f0f0);
-    font-size: 14px;
-    line-height: 1.3;
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border);
 }
 
-.attachment-remover-settings .setting-title small {
-    color: var(--SmartThemeQuoteColor, #aaa);
-    font-size: 12px;
-    line-height: 1.4;
-    opacity: 0.8;
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-/* Advanced section styling */
-.attachment-remover-advanced {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 16px 0;
+.logo-icon {
+    background: var(--primary);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
 }
 
-.attachment-remover-advanced h4 {
-    margin: 0 0 12px 0;
-    color: var(--SmartThemeEmColor, #f0f0f0);
+.title h1 {
+    font-size: 28px;
+    color: var(--text);
+}
+
+.title p {
+    color: var(--text-secondary);
     font-size: 16px;
-    font-weight: 600;
 }
 
-/* Help section styling */
-.attachment-remover-help {
-    background: rgba(76, 175, 80, 0.1);
-    border: 1px solid rgba(76, 175, 80, 0.3);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 16px 0;
-}
-
-.attachment-remover-help h4 {
-    margin: 0 0 12px 0;
-    color: var(--SmartThemeEmColor, #f0f0f0);
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.attachment-remover-help details {
-    margin-bottom: 12px;
-}
-
-.attachment-remover-help summary {
-    cursor: pointer;
-    padding: 8px 0;
-    color: var(--SmartThemeEmColor, #e0e0e0);
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border-radius: 20px;
     font-weight: 500;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 8px;
 }
 
-.attachment-remover-help summary:hover {
-    color: var(--SmartThemeQuoteColor, #b592e0);
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--danger);
 }
 
-.attachment-remover-help .help-content {
-    padding: 12px 0;
-    color: var(--SmartThemeQuoteColor, #ccc);
-    line-height: 1.5;
+.status-dot.active {
+    background: var(--success);
 }
 
-.attachment-remover-help .help-content p {
-    margin: 8px 0;
+.card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
 }
 
-.attachment-remover-help .help-content ul {
-    margin: 8px 0;
-    padding-left: 20px;
+.card:hover {
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
 }
 
-.attachment-remover-help .help-content li {
-    margin: 4px 0;
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.attachment-remover-help .help-content ol {
-    margin: 8px 0;
-    padding-left: 20px;
-}
-
-.attachment-remover-help .help-content ol li {
-    margin: 6px 0;
-}
-
-/* Code styling */
-.attachment-remover-help .selector-code {
-    display: block;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    padding: 12px;
-    margin: 8px 0;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    line-height: 1.4;
-    color: #4CAF50;
-    overflow-x: auto;
-}
-
-/* Horizontal rules */
-.attachment-remover-settings hr {
-    border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    margin: 20px 0;
-    opacity: 0.6;
-}
-
-/* Footer section */
-.attachment-remover-footer {
-    background: rgba(33, 150, 243, 0.1);
-    border: 1px solid rgba(33, 150, 243, 0.3);
-    border-radius: 6px;
-    padding: 12px;
-    margin-top: 16px;
-}
-
-.attachment-remover-footer small {
-    color: var(--SmartThemeQuoteColor, #aaa);
-    font-size: 12px;
-    line-height: 1.4;
-    display: block;
-    margin: 0;
-}
-
-.attachment-remover-footer strong {
-    color: var(--SmartThemeEmColor, #e0e0e0);
-}
-
-/* Error state styling */
-.attachment-remover-error {
-    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%);
-    border: 1px solid rgba(244, 67, 54, 0.4);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 16px 0;
-}
-
-.attachment-remover-error h4 {
-    color: #ff6b6b;
-    margin: 0 0 12px 0;
-    font-size: 16px;
+.card-title {
+    font-size: 22px;
     font-weight: 600;
+    position: relative;
+    padding-bottom: 10px;
 }
 
-.attachment-remover-error p {
-    color: var(--SmartThemeQuoteColor, #ccc);
-    margin: 8px 0;
-    line-height: 1.5;
-}
-
-.attachment-remover-error code {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 2px 6px;
+.card-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: var(--primary);
     border-radius: 3px;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: #ff9999;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .attachment-remover-settings .inline-drawer-content {
-        padding: 12px;
-    }
-    
-    .attachment-remover-settings .checkbox_label {
-        padding: 6px;
-    }
-    
-    .attachment-remover-advanced,
-    .attachment-remover-help,
-    .attachment-remover-description,
-    .attachment-remover-footer {
-        padding: 12px;
-    }
+.card-description {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.6;
 }
 
-/* Dark mode enhancements */
-@media (prefers-color-scheme: dark) {
-    .attachment-remover-settings .inline-drawer-toggle.inline-drawer-header {
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    }
-    
-    .attachment-remover-settings .inline-drawer-toggle.inline-drawer-header:hover {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    }
+/* Toggle Switch */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-/* Animation for smooth transitions */
-.attachment-remover-settings .inline-drawer-content {
-    animation: fadeIn 0.3s ease-in-out;
+.toggle-label {
+    font-weight: 500;
+    font-size: 18px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #555;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Preview Section */
+.preview-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.preview-box {
+    background: #2d2d44;
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.preview-box:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+}
+
+.preview-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.preview-title i {
+    font-size: 20px;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    padding: 15px;
+    border-radius: 12px;
+    max-width: 80%;
+    animation: fadeIn 0.5s ease;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* Focus styles for accessibility */
-.attachment-remover-settings input[type="checkbox"]:focus {
-    outline: 2px solid var(--SmartThemeQuoteColor, #b592e0);
-    outline-offset: 2px;
+.user-message {
+    background: var(--primary);
+    align-self: flex-end;
 }
 
-.attachment-remover-settings summary:focus {
-    outline: 2px solid var(--SmartThemeQuoteColor, #b592e0);
-    outline-offset: 2px;
-    border-radius: 3px;
+.bot-message {
+    background: #3a3a55;
+    align-self: flex-start;
 }
 
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-    .attachment-remover-settings .inline-drawer-toggle.inline-drawer-header {
-        border-width: 2px;
+.attachment {
+    margin-top: 10px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: var(--transition);
+}
+
+.attachment:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.attachment-icon {
+    font-size: 24px;
+}
+
+.attachment-info {
+    flex: 1;
+}
+
+.attachment-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.attachment-size {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.removed {
+    opacity: 0.5;
+    position: relative;
+}
+
+.removed::after {
+    content: "REMOVED";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--danger);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.file-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.file-type {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.file-type:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+}
+
+.file-icon {
+    font-size: 32px;
+}
+
+.file-name {
+    font-size: 14px;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.stat {
+    padding: 15px;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 5px;
+    transition: var(--transition);
+}
+
+.stat:hover .stat-number {
+    transform: scale(1.1);
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.btn {
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 2px solid var(--border);
+    color: var(--text);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    background: var(--success);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: translateX(150%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.settings-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.settings-option:last-child {
+    border-bottom: none;
+}
+
+.option-label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.option-title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.option-description {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.file-exception-list {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.exception-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.exception-item:last-child {
+    border-bottom: none;
+}
+
+.remove-exception {
+    color: var(--danger);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.remove-exception:hover {
+    transform: scale(1.2);
+}
+
+.add-exception {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.add-exception input {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--text);
+}
+
+.add-exception button {
+    padding: 8px 15px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.add-exception button:hover {
+    background: var(--primary-dark);
+}
+
+@media (max-width: 768px) {
+    .preview-section {
+        grid-template-columns: 1fr;
     }
     
-    .attachment-remover-settings .checkbox_label:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+    .stats {
+        flex-direction: column;
+        gap: 15px;
     }
     
-    .attachment-remover-settings .setting-title small {
-        opacity: 1;
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
     }
 }
