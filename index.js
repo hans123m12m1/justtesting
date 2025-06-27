@@ -1,356 +1,105 @@
-// Smart Attachment Cleaner Extension for SillyTavern
-// Automatically removes attachments after AI generation is completed
+// SillyTavern Extension: Attachment Remover
+// This script attempts to remove user-sent attachments from the chat
+// once the AI has sent its response.
 
-(() => {
-    'use strict';
+// !!! IMPORTANT: YOU MUST VERIFY THESE SELECTORS FOR YOUR SILLYTAVERN VERSION !!!
+// Use your browser's developer tools (F12) to inspect the HTML and find the correct selectors.
 
-    // Ensure SillyTavern global object is available
-    if (typeof SillyTavern === 'undefined') {
-        console.error('SillyTavern object not found. Smart Attachment Cleaner extension cannot load.');
+// Selector for the main chat messages container (where messages are added)
+// Example: '#chat-log', '.messages-container', '[data-scroll-area="chat"]'
+const CHAT_CONTAINER_SELECTOR = '#chat-log'; // <-- *** VERIFY THIS ***
+
+// Selector for individual message elements
+// Example: '.message', '.chat-message', 'div.mes_container', '[data-message-id]'
+const MESSAGE_SELECTOR = '.message'; // <-- *** VERIFY THIS ***
+
+// Selector for attachment elements within a message
+// This should target the actual image/file preview within the user's message.
+// Example: '.attachment-preview', 'img.file-preview', 'div.file-upload-thumbnail'
+const ATTACHMENT_SELECTOR = '.attachment-preview'; // <-- *** VERIFY THIS ***
+
+// Selector for identifying AI messages (e.g., a class on the AI message container)
+// Example: '.ai-message', '.char-message', 'div.message_container.ai'
+const AI_MESSAGE_SELECTOR = '.ai-message'; // <-- *** VERIFY THIS ***
+
+
+// --- Core Logic ---
+function removeAttachments() {
+    const chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR);
+    if (!chatContainer) {
+        console.warn('SillyTavern Attachment Remover: Chat container not found. Check CHAT_CONTAINER_SELECTOR.');
         return;
     }
 
-    // Extension configuration
-    let extensionConfig = SillyTavern.getExtensionConfig('smart-attachment-cleaner') || {};
-    
-    // Default configuration
-    const defaultConfig = {
-        enabled: true,
-        removeAfterGeneration: true,
-        removeFromHistory: false,
-        showNotifications: true,
-        cleanupDelay: 2000, // 2 seconds delay after generation
-        preserveImportantFiles: true
-    };
-
-    // Merge with defaults
-    extensionConfig = { ...defaultConfig, ...extensionConfig };
-
-    // State variables
-    let isGenerating = false;
-    let pendingCleanup = new Set();
-    let statusIndicator = null;
-
-    // Save configuration
-    function saveConfig() {
-        SillyTavern.saveExtensionConfig('smart-attachment-cleaner', extensionConfig);
+    // Get all messages. We'll usually look at the last few messages.
+    const messages = chatContainer.querySelectorAll(MESSAGE_SELECTOR);
+    if (messages.length < 2) {
+        // Need at least one user message and one AI message to trigger
+        return;
     }
 
-    // Create status indicator
-    function createStatusIndicator() {
-        if (statusIndicator) return;
+    // Check the last message for being an AI response
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.matches(AI_MESSAGE_SELECTOR)) {
+        console.log('SillyTavern Attachment Remover: AI response detected.');
 
-        statusIndicator = document.createElement('div');
-        statusIndicator.id = 'attachment-cleaner-status';
-        statusIndicator.className = 'attachment-cleaner-status';
-        statusIndicator.innerHTML = `
-            <i class="fa-solid fa-broom"></i>
-            <span>Smart Cleaner: ${extensionConfig.enabled ? 'ON' : 'OFF'}</span>
-        `;
-        
-        // Add to top bar or suitable location
-        const topBar = document.querySelector('#top-bar') || document.querySelector('#main_controls');
-        if (topBar) {
-            topBar.appendChild(statusIndicator);
-        }
+        // Look at the message(s) preceding the AI response for attachments
+        // It's safer to iterate backwards from the AI message to find the user message
+        for (let i = messages.length - 2; i >= 0; i--) {
+            const potentialUserMessage = messages[i];
 
-        updateStatusIndicator();
-    }
-
-    // Update status indicator
-    function updateStatusIndicator() {
-        if (!statusIndicator) return;
-
-        const span = statusIndicator.querySelector('span');
-        const icon = statusIndicator.querySelector('i');
-        
-        if (extensionConfig.enabled) {
-            statusIndicator.classList.add('enabled');
-            statusIndicator.classList.remove('disabled');
-            span.textContent = 'Smart Cleaner: ON';
-            icon.className = 'fa-solid fa-broom';
-        } else {
-            statusIndicator.classList.add('disabled');
-            statusIndicator.classList.remove('enabled');
-            span.textContent = 'Smart Cleaner: OFF';
-            icon.className = 'fa-solid fa-broom-ball';
-        }
-    }
-
-    // Show notification
-    function showNotification(message, type = 'info') {
-        if (!extensionConfig.showNotifications) return;
-
-        // Use SillyTavern's toast system if available
-        if (typeof toastr !== 'undefined') {
-            toastr[type](message, 'Smart Attachment Cleaner');
-        } else {
-            console.log(`[Smart Attachment Cleaner] ${message}`);
-        }
-    }
-
-    // Check if file should be preserved
-    function shouldPreserveFile(filename) {
-        if (!extensionConfig.preserveImportantFiles) return false;
-        
-        const importantExtensions = ['.json', '.yaml', '.yml', '.config', '.settings'];
-        const importantKeywords = ['character', 'preset', 'config', 'settings', 'backup'];
-        
-        const lowerFilename = filename.toLowerCase();
-        
-        return importantExtensions.some(ext => lowerFilename.endsWith(ext)) ||
-               importantKeywords.some(keyword => lowerFilename.includes(keyword));
-    }
-
-    // Remove attachments from DOM
-    function removeAttachmentsFromDOM(messageElement, messageId = null) {
-        if (!messageElement) return 0;
-
-        const attachmentSelectors = [
-            '.message-attachment',
-            '.image-container',
-            '.file-attachment',
-            '.img_container',
-            '.attachment-wrapper',
-            '.mes_img',
-            '.mes_file',
-            '[data-attachment]'
-        ];
-
-        let removedCount = 0;
-        
-        attachmentSelectors.forEach(selector => {
-            const attachments = messageElement.querySelectorAll(selector);
+            // Find attachments within this message
+            const attachments = potentialUserMessage.querySelectorAll(ATTACHMENT_SELECTOR);
             attachments.forEach(attachment => {
-                // Check if we should preserve this attachment
-                const filename = attachment.getAttribute('data-filename') || 
-                               attachment.getAttribute('title') || 
-                               attachment.textContent || '';
-                
-                if (extensionConfig.preserveImportantFiles && shouldPreserveFile(filename)) {
-                    console.log(`[Smart Attachment Cleaner] Preserving important file: ${filename}`);
-                    return;
-                }
-
-                attachment.style.transition = 'opacity 0.3s ease-out';
-                attachment.style.opacity = '0';
-                
-                setTimeout(() => {
-                    if (attachment.parentNode) {
-                        attachment.remove();
-                        removedCount++;
-                        console.log(`[Smart Attachment Cleaner] Removed attachment: ${filename || 'unnamed'}`);
-                    }
-                }, 300);
+                console.log('SillyTavern Attachment Remover: Removing attachment:', attachment);
+                attachment.remove(); // Completely remove the element from the DOM
             });
-        });
 
-        return removedCount;
-    }
-
-    // Clean message data
-    function cleanMessageData(messageData) {
-        if (!messageData || !extensionConfig.enabled) return;
-
-        if (messageData.attachments && Array.isArray(messageData.attachments)) {
-            const originalCount = messageData.attachments.length;
-            
-            if (extensionConfig.preserveImportantFiles) {
-                messageData.attachments = messageData.attachments.filter(attachment => {
-                    const filename = attachment.name || attachment.filename || '';
-                    return shouldPreserveFile(filename);
-                });
-            } else {
-                messageData.attachments = [];
-            }
-
-            const removedCount = originalCount - messageData.attachments.length;
-            if (removedCount > 0) {
-                console.log(`[Smart Attachment Cleaner] Cleaned ${removedCount} attachment(s) from message data`);
-            }
-        }
-
-        // Clean other attachment properties
-        ['images', 'files', 'media'].forEach(prop => {
-            if (messageData[prop] && Array.isArray(messageData[prop])) {
-                if (!extensionConfig.preserveImportantFiles) {
-                    messageData[prop] = [];
-                }
-            }
-        });
-    }
-
-    // Cleanup after generation
-    function scheduleCleanup(messageElement, messageId) {
-        if (!extensionConfig.enabled || !extensionConfig.removeAfterGeneration) return;
-
-        setTimeout(() => {
-            if (messageElement && messageElement.parentNode) {
-                const removedCount = removeAttachmentsFromDOM(messageElement, messageId);
-                if (removedCount > 0) {
-                    showNotification(`Cleaned ${removedCount} attachment(s) after generation`, 'success');
-                }
-            }
-            pendingCleanup.delete(messageId);
-        }, extensionConfig.cleanupDelay);
-    }
-
-    // Initialize extension settings UI
-    function initializeSettingsUI() {
-        // Update checkboxes
-        const enabledCheckbox = document.getElementById('smart-cleaner-enabled');
-        const afterGenCheckbox = document.getElementById('smart-cleaner-after-gen');
-        const fromHistoryCheckbox = document.getElementById('smart-cleaner-from-history');
-        const notificationsCheckbox = document.getElementById('smart-cleaner-notifications');
-        const preserveFilesCheckbox = document.getElementById('smart-cleaner-preserve-files');
-        const delaySlider = document.getElementById('smart-cleaner-delay');
-        const delayValue = document.getElementById('delay-value');
-
-        if (enabledCheckbox) {
-            enabledCheckbox.checked = extensionConfig.enabled;
-            enabledCheckbox.addEventListener('change', (e) => {
-                extensionConfig.enabled = e.target.checked;
-                saveConfig();
-                updateStatusIndicator();
-                showNotification(`Smart Attachment Cleaner ${e.target.checked ? 'enabled' : 'disabled'}`);
-            });
-        }
-
-        if (afterGenCheckbox) {
-            afterGenCheckbox.checked = extensionConfig.removeAfterGeneration;
-            afterGenCheckbox.addEventListener('change', (e) => {
-                extensionConfig.removeAfterGeneration = e.target.checked;
-                saveConfig();
-            });
-        }
-
-        if (fromHistoryCheckbox) {
-            fromHistoryCheckbox.checked = extensionConfig.removeFromHistory;
-            fromHistoryCheckbox.addEventListener('change', (e) => {
-                extensionConfig.removeFromHistory = e.target.checked;
-                saveConfig();
-            });
-        }
-
-        if (notificationsCheckbox) {
-            notificationsCheckbox.checked = extensionConfig.showNotifications;
-            notificationsCheckbox.addEventListener('change', (e) => {
-                extensionConfig.showNotifications = e.target.checked;
-                saveConfig();
-            });
-        }
-
-        if (preserveFilesCheckbox) {
-            preserveFilesCheckbox.checked = extensionConfig.preserveImportantFiles;
-            preserveFilesCheckbox.addEventListener('change', (e) => {
-                extensionConfig.preserveImportantFiles = e.target.checked;
-                saveConfig();
-            });
-        }
-
-        if (delaySlider && delayValue) {
-            delaySlider.value = extensionConfig.cleanupDelay;
-            delayValue.textContent = `${extensionConfig.cleanupDelay}ms`;
-            delaySlider.addEventListener('input', (e) => {
-                extensionConfig.cleanupDelay = parseInt(e.target.value);
-                delayValue.textContent = `${extensionConfig.cleanupDelay}ms`;
-                saveConfig();
-            });
-        }
-
-        // Manual cleanup button
-        const manualCleanButton = document.getElementById('smart-cleaner-manual-clean');
-        if (manualCleanButton) {
-            manualCleanButton.addEventListener('click', () => {
-                const messageElements = document.querySelectorAll('.mes');
-                let totalRemoved = 0;
-                
-                messageElements.forEach(element => {
-                    totalRemoved += removeAttachmentsFromDOM(element);
-                });
-                
-                showNotification(`Manually cleaned ${totalRemoved} attachment(s) from chat`, 'info');
-            });
+            // If you only want to remove attachments from the immediately preceding user message,
+            // you could add a 'break;' here after checking the first one.
+            // Example:
+            // if (attachments.length > 0) {
+            //     break; // Stop after processing the first message with attachments
+            // }
         }
     }
+}
 
-    // Main initialization
-    SillyTavern.on('ready', () => {
-        console.log('[Smart Attachment Cleaner] Extension initializing...');
-        
-        const context = SillyTavern.getContext();
-        
-        // Create status indicator
-        createStatusIndicator();
-        
-        // Initialize settings UI when settings panel is opened
-        setTimeout(() => {
-            initializeSettingsUI();
-        }, 1000);
-
-        // Hook into message events
-        context.on('messageReceived', (data) => {
-            if (!extensionConfig.enabled) return;
-            
-            cleanMessageData(data);
-            
-            if (data.is_user) {
-                // User message - clean immediately if enabled
-                setTimeout(() => {
-                    const messageElements = document.querySelectorAll('.mes:last-child');
-                    if (messageElements.length > 0) {
-                        removeAttachmentsFromDOM(messageElements[0]);
-                    }
-                }, 100);
-            }
-        });
-
-        context.on('messageAdded', (data) => {
-            if (!extensionConfig.enabled) return;
-            
-            const messageElement = data.domElement || data.element;
-            if (messageElement) {
-                // If this is during generation, schedule cleanup for after
-                if (isGenerating && !data.is_user) {
-                    pendingCleanup.add(data.id || Date.now());
-                    scheduleCleanup(messageElement, data.id);
-                } else if (data.is_user) {
-                    // Clean user messages immediately
-                    setTimeout(() => removeAttachmentsFromDOM(messageElement), 100);
-                }
-            }
-        });
-
-        // Track generation state
-        context.on('generation_started', () => {
-            isGenerating = true;
-            console.log('[Smart Attachment Cleaner] Generation started - scheduling cleanup');
-        });
-
-        context.on('generation_stopped', () => {
-            isGenerating = false;
-            console.log('[Smart Attachment Cleaner] Generation completed');
-        });
-
-        // Clean up on chat change
-        context.on('chatChanged', () => {
-            pendingCleanup.clear();
-            if (extensionConfig.removeFromHistory) {
-                setTimeout(() => {
-                    const messageElements = document.querySelectorAll('.mes');
-                    let totalRemoved = 0;
-                    messageElements.forEach(element => {
-                        totalRemoved += removeAttachmentsFromDOM(element);
-                    });
-                    if (totalRemoved > 0) {
-                        showNotification(`Cleaned ${totalRemoved} attachment(s) from chat history`, 'info');
-                    }
-                }, 500);
-            }
-        });
-
-        console.log('[Smart Attachment Cleaner] Extension ready!');
-        showNotification('Smart Attachment Cleaner loaded successfully!', 'success');
+// Set up a MutationObserver to watch for new messages being added to the chat log.
+// This is more efficient than polling.
+const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            // A small delay might be necessary to ensure the message and its contents
+            // (like the attachment) are fully rendered before we try to remove them.
+            // Adjust the delay (in milliseconds) if attachments are sometimes missed.
+            setTimeout(removeAttachments, 150); // 150ms delay
+        }
     });
+});
 
-})();
+// Function to start observing the chat container
+const startObservingChat = () => {
+    const chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR);
+    if (chatContainer) {
+        // Start observing for changes to the children of the chat container
+        observer.observe(chatContainer, { childList: true, subtree: true });
+        console.log('SillyTavern Attachment Remover: Observing chat container for new messages.');
+    } else {
+        // If chat container isn't ready yet, retry after a short delay
+        console.log('SillyTavern Attachment Remover: Chat container not found, retrying...');
+        setTimeout(startObservingChat, 500); // Retry every 500ms
+    }
+};
+
+// Initial call to start the observation process once the DOM is ready.
+// The extension system usually handles this, but a direct call ensures it starts.
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startObservingChat);
+} else {
+    startObservingChat();
+}
+
+// You can add an optional listener for when the chat is cleared or reset
+// This might be specific to SillyTavern's internal events.
+// For now, the MutationObserver should be sufficient for dynamic message additions.
