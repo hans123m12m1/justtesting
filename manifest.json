@@ -1,12 +1,15 @@
 {
-    "display_name": "Attachment Remover",
-    "loading_order": 50,
+    "display_name": "attachment remover",
+    "loading_order": 1000,
     "requires": [],
     "optional": [],
+    "dependencies": [],
     "js": "index.js",
-    "css": "",
-    "author": "SillyTavern Community",
-    "version": "2.0.0",
+    "css": "style.css",
+    "author": "Your name",
+    "version": "1.0.0",
     "homePage": "https://github.com/hans123m12m1/justtesting",
-    "description": "Automatically removes user-sent attachments from chat messages after the AI responds, helping keep chat logs clean and reducing memory usage."
+    "auto_update": true,
+    
+    }
 }

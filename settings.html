@@ -1,17 +1,42 @@
 <div class="attachment-remover-settings">
     <style>
-        /* Enhanced styles for the Attachment Remover extension */
+        /* Enhanced styles for the Attachment Remover extension, inspired by Prose Polisher theme */
+
+        /* Define Nemo-like variables for consistency, with fallbacks */
+        :root {
+            --nemo-primary-bg: #222;
+            --nemo-secondary-bg: #2a2a2a;
+            --nemo-tertiary-bg: #1e1e1e;
+            --nemo-primary-bg-sub: #1e1e1e; /* Used for group boxes */
+            --nemo-border-color: #444;
+            --nemo-primary-accent: #6a3d9a; /* Purple */
+            --nemo-secondary-accent: #b592e0; /* Lighter purple/pink */
+            --nemo-dangerous-color: #e74c3c; /* Red for errors/danger */
+            --nemo-text-color: #fff;
+            --nemo-text-muted: #999;
+            --nemo-item-hover-bg: #333;
+            --nemo-shadow-color: rgba(0,0,0,0.5);
+            --nemo-success-color: #4CAF50; /* Green for success/help */
+            --nemo-info-color: #2196F3; /* Blue for info/footer */
+
+            /* Map original SmartTheme variables to Nemo for compatibility if needed */
+            --SmartThemeBodyColor: var(--nemo-secondary-bg);
+            --SmartThemeBorderColor: var(--nemo-border-color);
+            --SmartThemeQuoteColor: var(--nemo-secondary-accent);
+            --SmartThemeEmColor: var(--nemo-text-color);
+        }
 
         /* Main container styling */
         .attachment-remover-settings {
             font-family: var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+            color: var(--nemo-text-color);
         }
 
         /* Header styling with improved visual hierarchy */
         .attachment-remover-settings .inline-drawer-toggle.inline-drawer-header {
-            background: linear-gradient(135deg, var(--SmartThemeBodyColor, #2a2a2a) 0%, rgba(42, 42, 42, 0.8) 100%);
-            border: 1px solid var(--SmartThemeBorderColor, #444);
-            border-left: 4px solid var(--SmartThemeQuoteColor, #b592e0);
+            background-color: var(--nemo-secondary-bg);
+            border: 1px solid var(--nemo-border-color);
+            border-left: 4px solid var(--nemo-primary-accent); /* Main accent color */
             padding: 12px 16px;
             margin-bottom: 8px;
             border-radius: 6px;
@@ -21,8 +46,8 @@
         }
 
         .attachment-remover-settings .inline-drawer-toggle.inline-drawer-header:hover {
-            background: linear-gradient(135deg, var(--SmartThemeBodyColor, #333) 0%, rgba(51, 51, 51, 0.8) 100%);
-            border-left-color: var(--SmartThemeQuoteColor, #c9a3f0);
+            background-color: var(--nemo-item-hover-bg);
+            border-left-color: var(--nemo-secondary-accent); /* Lighter accent on hover */
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
@@ -30,15 +55,15 @@
         /* Content area styling */
         .attachment-remover-settings .inline-drawer-content {
             padding: 16px;
-            background: var(--SmartThemeBodyColor, rgba(42, 42, 42, 0.5));
+            background: var(--nemo-secondary-bg); /* Consistent background */
             border-radius: 0 0 6px 6px;
             margin-top: -8px;
         }
 
-        /* Description section */
+        /* Description section - adapted to group box style */
         .attachment-remover-description {
-            background: rgba(181, 146, 224, 0.1);
-            border: 1px solid rgba(181, 146, 224, 0.3);
+            background: var(--nemo-primary-bg-sub);
+            border: 1px solid var(--nemo-border-color);
             border-radius: 6px;
             padding: 12px;
             margin-bottom: 16px;
@@ -46,7 +71,7 @@
 
         .attachment-remover-description p {
             margin: 0;
-            color: var(--SmartThemeEmColor, #e0e0e0);
+            color: var(--nemo-text-color);
             line-height: 1.5;
         }
 
@@ -75,7 +100,7 @@
             margin: 0;
             min-width: 16px;
             height: 16px;
-            accent-color: var(--SmartThemeQuoteColor, #b592e0);
+            accent-color: var(--nemo-secondary-accent); /* Use Nemo accent color */
             cursor: pointer;
             margin-top: 2px; /* Align with text */
         }
@@ -89,22 +114,22 @@
         }
 
         .attachment-remover-settings .setting-title strong {
-            color: var(--SmartThemeEmColor, #f0f0f0);
+            color: var(--nemo-text-color);
             font-size: 14px;
             line-height: 1.3;
         }
 
         .attachment-remover-settings .setting-title small {
-            color: var(--SmartThemeQuoteColor, #aaa);
+            color: var(--nemo-text-muted); /* Muted text color */
             font-size: 12px;
             line-height: 1.4;
             opacity: 0.8;
         }
 
-        /* Advanced section styling */
+        /* Advanced section styling - adapted to group box style */
         .attachment-remover-advanced {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--nemo-primary-bg-sub);
+            border: 1px solid var(--nemo-border-color);
             border-radius: 6px;
             padding: 16px;
             margin: 16px 0;
@@ -112,15 +137,15 @@
 
         .attachment-remover-advanced h4 {
             margin: 0 0 12px 0;
-            color: var(--SmartThemeEmColor, #f0f0f0);
+            color: var(--nemo-text-color);
             font-size: 16px;
             font-weight: 600;
         }
 
-        /* Help section styling */
+        /* Help section styling - adapted to group box style with success color */
         .attachment-remover-help {
-            background: rgba(76, 175, 80, 0.1);
-            border: 1px solid rgba(76, 175, 80, 0.3);
+            background: rgba(76, 175, 80, 0.1); /* Original green tint */
+            border: 1px solid rgba(76, 175, 80, 0.3); /* Original green tint */
             border-radius: 6px;
             padding: 16px;
             margin: 16px 0;
@@ -128,7 +153,7 @@
 
         .attachment-remover-help h4 {
             margin: 0 0 12px 0;
-            color: var(--SmartThemeEmColor, #f0f0f0);
+            color: var(--nemo-text-color);
             font-size: 16px;
             font-weight: 600;
         }
@@ -140,19 +165,19 @@
         .attachment-remover-help summary {
             cursor: pointer;
             padding: 8px 0;
-            color: var(--SmartThemeEmColor, #e0e0e0);
+            color: var(--nemo-text-color);
             font-weight: 500;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--nemo-border-color);
             margin-bottom: 8px;
         }
 
         .attachment-remover-help summary:hover {
-            color: var(--SmartThemeQuoteColor, #b592e0);
+            color: var(--nemo-secondary-accent);
         }
 
         .attachment-remover-help .help-content {
             padding: 12px 0;
-            color: var(--SmartThemeQuoteColor, #ccc);
+            color: var(--nemo-text-muted);
             line-height: 1.5;
         }
 
@@ -189,7 +214,7 @@
             font-family: 'Courier New', monospace;
             font-size: 12px;
             line-height: 1.4;
-            color: #4CAF50;
+            color: var(--nemo-success-color); /* Green for code */
             overflow-x: auto;
         }
 
@@ -201,17 +226,17 @@
             opacity: 0.6;
         }
 
-        /* Footer section */
+        /* Footer section - adapted to group box style with info color */
         .attachment-remover-footer {
-            background: rgba(33, 150, 243, 0.1);
-            border: 1px solid rgba(33, 150, 243, 0.3);
+            background: rgba(33, 150, 243, 0.1); /* Original blue tint */
+            border: 1px solid rgba(33, 150, 243, 0.3); /* Original blue tint */
             border-radius: 6px;
             padding: 12px;
             margin-top: 16px;
         }
 
         .attachment-remover-footer small {
-            color: var(--SmartThemeQuoteColor, #aaa);
+            color: var(--nemo-text-muted);
             font-size: 12px;
             line-height: 1.4;
             display: block;
@@ -219,10 +244,10 @@
         }
 
         .attachment-remover-footer strong {
-            color: var(--SmartThemeEmColor, #e0e0e0);
+            color: var(--nemo-text-color);
         }
 
-        /* Error state styling */
+        /* Error state styling - adapted to group box style with dangerous color */
         .attachment-remover-error {
             background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%);
             border: 1px solid rgba(244, 67, 54, 0.4);
@@ -232,14 +257,14 @@
         }
 
         .attachment-remover-error h4 {
-            color: #ff6b6b;
+            color: var(--nemo-dangerous-color);
             margin: 0 0 12px 0;
             font-size: 16px;
             font-weight: 600;
         }
 
         .attachment-remover-error p {
-            color: var(--SmartThemeQuoteColor, #ccc);
+            color: var(--nemo-text-muted);
             margin: 8px 0;
             line-height: 1.5;
         }
@@ -250,7 +275,7 @@
             border-radius: 3px;
             font-family: 'Courier New', monospace;
             font-size: 12px;
-            color: #ff9999;
+            color: #ff9999; /* Lighter red for error code */
         }
 
         /* Responsive design */
@@ -300,12 +325,12 @@
 
         /* Focus styles for accessibility */
         .attachment-remover-settings input[type="checkbox"]:focus {
-            outline: 2px solid var(--SmartThemeQuoteColor, #b592e0);
+            outline: 2px solid var(--nemo-secondary-accent);
             outline-offset: 2px;
         }
 
         .attachment-remover-settings summary:focus {
-            outline: 2px solid var(--SmartThemeQuoteColor, #b592e0);
+            outline: 2px solid var(--nemo-secondary-accent);
             outline-offset: 2px;
             border-radius: 3px;
         }
