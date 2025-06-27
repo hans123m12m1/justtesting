@@ -1,15 +1,16 @@
 {
-    "display_name": "attachment_remover",
-    "loading_order": 1000,
+    "display_name": "yes",
+    "loading_order": 1,
     "requires": [],
     "optional": [],
     "dependencies": [],
     "js": "index.js",
     "css": "style.css",
-    "author": "Your name",
+    "author": "yes",
     "version": "1.0.0",
-    "homePage": "https://github.com/hans123m12m1/justtesting",
+    "homePage": "https://github.com/your/extension",
     "auto_update": true,
-    
+    "i18n": {
+        "de-de": "i18n/de-de.json"
     }
 }
