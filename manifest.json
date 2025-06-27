@@ -4,7 +4,7 @@
     "requires": [],
     "optional": [],
     "dependencies": [],
-    "js": "index.js",
+    "js": "content.js",
     "css": "style.css",
     "author": "yes",
     "version": "1.0.0",
