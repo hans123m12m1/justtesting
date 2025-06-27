@@ -1,4 +1,4 @@
-import { extension_settings, getContext } from "../../../scripts/shared.js";
+import { extension_settings } from "../../../scripts/shared.js";
 
 // --- CONFIGURATION ---
 const CONFIG = {
@@ -20,7 +20,7 @@ const CONFIG = {
 
 // --- EXTENSION STATE ---
 const SETTINGS_KEY = 'attachment_remover_settings';
-const DEFAULT_SETTINGS = { 
+const DEFAULT_SETTINGS = {
     enabled: false,
     removeFromAllUserMessages: false, // Option to remove from all user messages or just the most recent
     debugMode: false
@@ -95,7 +95,7 @@ function safeQuerySelectorAll(selector, parent = document) {
 function removeAttachmentsFromMessage(message) {
     const attachments = safeQuerySelectorAll(CONFIG.selectors.attachment, message);
     let removedCount = 0;
-    
+
     attachments.forEach(attachment => {
         try {
             log(`Removing attachment: ${attachment.outerHTML.substring(0, 100)}...`, 'debug');
@@ -105,7 +105,7 @@ function removeAttachmentsFromMessage(message) {
             log(`Failed to remove attachment: ${error.message}`, 'error');
         }
     });
-    
+
     return removedCount;
 }
 
@@ -129,7 +129,7 @@ function processNewMessages() {
     }
 
     isProcessing = true; // Set flag to prevent re-entry
-    
+
     try {
         const chatContainer = safeQuerySelector(CONFIG.selectors.chatContainer);
         if (!chatContainer) {
@@ -139,7 +139,7 @@ function processNewMessages() {
 
         const messages = Array.from(safeQuerySelectorAll(CONFIG.selectors.message, chatContainer));
         // Need at least one user message and the subsequent AI message to process
-        if (messages.length < 2) { 
+        if (messages.length < 2) {
             log('Not enough messages to process (at least one user message and one AI message needed).', 'debug');
             return;
         }
@@ -155,33 +155,35 @@ function processNewMessages() {
         let totalRemoved = 0;
         // Start checking from the message *before* the last AI message (messages.length - 2)
         // and go backwards, up to CONFIG.limits.maxHistoryCheck messages or the very start of the chat.
-        // The loop condition ensures we don't go below index 0.
-        const startIndex = messages.length - 2; 
-        const endIndex = Math.max(0, messages.length - 1 - CONFIG.limits.maxHistoryCheck); 
+        const startIndex = messages.length - 2;
+        const endIndex = Math.max(0, messages.length - 1 - CONFIG.limits.maxHistoryCheck);
 
         for (let i = startIndex; i >= endIndex; i--) {
             const currentMessage = messages[i];
-            
-            // If we encounter another AI message while scanning backwards, it usually signifies a new "turn" or conversation boundary.
+
+            // If we encounter another AI message while scanning backwards, it signifies a new "turn".
             // We stop here to avoid removing attachments from previous, already-responded-to turns.
             if (isAIMessage(currentMessage)) {
                 log(`Hit previous AI message at index ${i}, stopping scan for attachments in older turns.`, 'debug');
                 break;
             }
 
+            // This is a user message, so process it for attachments.
             const removedCount = removeAttachmentsFromMessage(currentMessage);
             totalRemoved += removedCount;
 
             if (removedCount > 0) {
                 log(`Removed ${removedCount} attachment(s) from user message at index ${i}.`);
-                
-                // If the setting is to remove only from the most recent user message, we stop after the first one we find.
-                if (!settings.removeFromAllUserMessages) {
-                    log('Setting "Remove from all user messages" is off, stopping after first successful removal.', 'debug');
-                    break;
-                }
             } else {
                 log(`No attachments found in user message at index ${i}.`, 'debug');
+            }
+
+            // *** FIX: ***
+            // If the setting is to remove only from the most recent user messages, we stop after processing
+            // the very first user message we encounter, regardless of whether it had an attachment.
+            if (!settings.removeFromAllUserMessages) {
+                log('Setting "Remove from all user messages" is off, stopping after first user message in turn.', 'debug');
+                break;
             }
         }
 
@@ -220,8 +222,8 @@ function createObserver() {
             if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                 for (const node of mutation.addedNodes) {
                     // Check if the added node is a message itself or contains a message
-                    if (node.nodeType === Node.ELEMENT_NODE && 
-                        (node.matches(CONFIG.selectors.message) || 
+                    if (node.nodeType === Node.ELEMENT_NODE &&
+                        (node.matches(CONFIG.selectors.message) ||
                          node.querySelector(CONFIG.selectors.message))) {
                         shouldProcess = true;
                         break;
@@ -248,16 +250,16 @@ function createObserver() {
  */
 function startObserver() {
     const chatContainer = safeQuerySelector(CONFIG.selectors.chatContainer);
-    
+
     if (chatContainer) {
         createObserver();
-        observer.observe(chatContainer, { 
+        observer.observe(chatContainer, {
             childList: true, // Observe direct children additions/removals
             subtree: true    // Observe changes in descendants as well
         });
         log('Observer started successfully on chat container.');
         // Immediately try to process existing messages when observer starts
-        setTimeout(debouncedProcessMessages, CONFIG.delays.processMessages); 
+        setTimeout(debouncedProcessMessages, CONFIG.delays.processMessages);
         return true;
     } else {
         log(`Chat container "${CONFIG.selectors.chatContainer}" not found, retrying in ${CONFIG.delays.retryObserver}ms...`, 'debug');
@@ -349,7 +351,7 @@ function onSettingsChange() {
 
         saveSettings();
         log(`Settings updated - Enabled: ${settings.enabled}, Remove From All User Messages: ${settings.removeFromAllUserMessages}, Debug Mode: ${settings.debugMode}`);
-        
+
     } catch (error) {
         log(`Error updating settings: ${error.message}`, 'error');
     }
@@ -362,7 +364,6 @@ function onSettingsChange() {
  * @param {HTMLDivElement} div - The div element to render the settings into.
  */
 function onSettingsDivRender(div) {
-    // const context = getContext(); // 'getContext' is available but not used here. Can be removed if not needed for future features.
     const settingsHtmlPath = `extensions/attachment_remover/settings.html`;
     const settingsCssPath = `extensions/attachment_remover/styles.css`;
 
@@ -389,7 +390,7 @@ function onSettingsDivRender(div) {
         })
         .then(html => {
             div.innerHTML = html;
-            
+
             // Connect UI elements (checkboxes) to their respective settings and event listeners
             const enabledCheckbox = document.getElementById('attachment_remover_enable');
             const allMessagesCheckbox = document.getElementById('attachment_remover_all_messages');
@@ -465,7 +466,7 @@ function cleanup() {
         window.addEventListener('beforeunload', cleanup);
 
         log('Attachment Remover extension initialized successfully.');
-        
+
     } catch (error) {
         log(`Initialization failed: ${error.message}`, 'error');
     }
