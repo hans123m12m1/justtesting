@@ -3,8 +3,6 @@
 // Import necessary SillyTavern objects/functions
 import {
     saveSettingsDebounced,
-    eventSource,
-    event_types,
 } from '../../../../script.js';
 import {
     extension_settings,
@@ -12,7 +10,7 @@ import {
 
 // --- CONFIGURATION ---
 const LOG_PREFIX = `[AttachmentRemoverExt]`;
-const EXTENSION_NAME = "AttachmentRemover"; // Note: I changed this to match the folder name you're likely using.
+const EXTENSION_NAME = "AttachmentRemover";
 
 const SELECTORS = {
     settingsContainer: '.attachment-remover-settings',
@@ -69,6 +67,16 @@ function logDebug(message, ...args) {
     }
 }
 
+// Polyfill for findLastIndex for older browsers
+function findLastIndex(array, predicate) {
+    for (let i = array.length - 1; i >= 0; i--) {
+        if (predicate(array[i])) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 // --- CORE LOGIC ---
 function removeAttachments() {
     if (!currentSettings.enable) return;
@@ -77,52 +85,72 @@ function removeAttachments() {
     if (!chatContainer) return;
 
     const messages = Array.from(chatContainer.querySelectorAll(SELECTORS.message));
-    let lastAiMessageIndex = messages.findLastIndex(msg => msg.matches(SELECTORS.aiMessage));
+    const lastAiMessageIndex = findLastIndex(messages, msg => msg.matches(SELECTORS.aiMessage));
     if (lastAiMessageIndex === -1) {
         logDebug('No AI message found to determine the current turn.');
         return;
     }
 
     let attachmentsRemovedCount = 0;
+    let foundCurrentUserMessage = false;
+
     for (let i = lastAiMessageIndex - 1; i >= 0; i--) {
         const message = messages[i];
+        
+        // Stop if we find another AI message
         if (message.matches(SELECTORS.aiMessage)) {
             logDebug(`Stopped at previous AI message (index ${i}).`);
             break;
         }
 
-        if (message.matches(SELECTORS.userMessage)) {
-            if (currentSettings.preserveFirst && i === 0) {
-                logDebug('Preserving attachments in the first message.');
-                continue;
+        // Only process user messages
+        if (!message.matches(SELECTORS.userMessage)) continue;
+
+        // Check if we're at the first message in the chat
+        const isFirstMessage = i === 0;
+        
+        if (currentSettings.preserveFirst && isFirstMessage) {
+            logDebug('Preserving attachments in the first message.');
+            continue;
+        }
+
+        const attachments = Array.from(message.querySelectorAll(SELECTORS.attachment));
+        if (attachments.length === 0) continue;
+
+        logDebug(`Found ${attachments.length} attachments in user message at index ${i}.`);
+        
+        attachments.forEach(attachment => {
+            const isImage = attachment.tagName === 'IMG' || 
+                           attachment.classList.contains('mes_img') || 
+                           attachment.classList.contains('inline_image');
+            
+            if (currentSettings.imagesOnly && !isImage) {
+                logDebug('Skipping non-image attachment.', attachment);
+                return;
             }
+            
+            attachment.remove();
+            attachmentsRemovedCount++;
+            logDebug('Removed attachment:', attachment);
+        });
 
-            const attachments = Array.from(message.querySelectorAll(SELECTORS.attachment));
-            if (attachments.length === 0) continue;
-
-            logDebug(`Found ${attachments.length} attachments in user message at index ${i}.`);
-            attachments.forEach(attachment => {
-                const isImage = attachment.tagName === 'IMG' || attachment.matches('.mes_img, .inline_image');
-                if (currentSettings.imagesOnly && !isImage) {
-                    logDebug('Skipping non-image attachment.', attachment);
-                    return;
-                }
-                attachment.remove();
-                attachmentsRemovedCount++;
-                logDebug('Removed attachment:', attachment);
-            });
-
-            if (!currentSettings.allMessages) {
-                logDebug('Stopped after the most recent user message.');
-                break;
-            }
+        foundCurrentUserMessage = true;
+        
+        if (!currentSettings.allMessages) {
+            logDebug('Stopped after the most recent user message.');
+            break;
         }
     }
 
     if (attachmentsRemovedCount > 0) {
         console.log(`${LOG_PREFIX} Successfully removed ${attachmentsRemovedCount} attachment(s).`);
+        
         if (currentSettings.autoCleanup) {
-            console.warn(`${LOG_PREFIX} Auto Cleanup is enabled, but a direct API for chat cleanup is not available. Manual cleanup may be required.`);
+            // Trigger chat cleanup
+            if (typeof chat === 'object' && typeof chat.cleanupChat === 'function') {
+                chat.cleanupChat();
+                logDebug('Triggered chat cleanup after attachment removal.');
+            }
         }
     }
 }
@@ -176,7 +204,9 @@ export async function initializeExtension() {
         const chatObserver = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.addedNodes.length > 0) {
-                    const hasAiMessage = Array.from(mutation.addedNodes).some(node => node.nodeType === 1 && node.matches(SELECTORS.aiMessage));
+                    const hasAiMessage = Array.from(mutation.addedNodes).some(node => 
+                        node.nodeType === 1 && node.matches(SELECTORS.aiMessage)
+                    );
                     if (hasAiMessage) {
                         logDebug('New AI message detected. Triggering attachment removal.');
                         setTimeout(removeAttachments, 100);
@@ -185,7 +215,7 @@ export async function initializeExtension() {
                 }
             }
         });
-        chatObserver.observe(chatContainer, { childList: true });
+        chatObserver.observe(chatContainer, { childList: true, subtree: true });
         console.log(`${LOG_PREFIX} Chat observer initialized.`);
     } else {
         console.error(`${LOG_PREFIX} Chat container not found. Attachment removal will not function.`);

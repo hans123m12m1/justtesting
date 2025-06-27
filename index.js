@@ -4,7 +4,7 @@
 import { initializeExtension } from './content.js';
 
 // When the document is fully loaded, initialize the extension.
-$(document).ready(() => {
+window.addEventListener('DOMContentLoaded', () => {
     // A small delay ensures that all of SillyTavern's core components are ready.
     setTimeout(async () => {
         try {
@@ -13,5 +13,5 @@ $(document).ready(() => {
         } catch (error) {
             console.error(`[AttachmentRemoverExt] A critical error occurred during initialization:`, error);
         }
-    }, 1000);
+    }, 1500);
 });
