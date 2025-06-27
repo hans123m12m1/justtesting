@@ -1,108 +1,113 @@
-// SillyTavern Extension: Attachment Remover
+import { extension_settings, getContext } from "../../../scripts/shared.js";
 
-(function () {
-    // --- !! CRITICAL CONFIGURATION !! ---
-    // IF THE SCRIPT DOESN'T WORK, IT'S ALMOST CERTAINLY BECAUSE THESE SELECTORS ARE WRONG FOR YOUR VERSION OF SILLYTAVERN.
-    // USE THE F12 DEVELOPER TOOLS IN YOUR BROWSER TO "INSPECT" THE CHAT AND FIND THE CORRECT SELECTORS.
-    const SELECTORS = {
-        // The entire chat area where all messages are displayed.
-        CHAT_CONTAINER: '#chat-log',
-        // Each individual message block (both user and AI).
-        MESSAGE_BLOCK: '.message',
-        // The specific element INSIDE a user message that contains the image/file preview.
-        ATTACHMENT_PREVIEW: '.attachment-preview',
-        // A class that is ONLY present on AI/bot messages.
-        AI_MESSAGE_IDENTIFIER: '.ai-message',
-    };
+// --- CONFIGURATION: IF IT DOESN'T WORK, CHANGE THESE SELECTORS ---
+const CHAT_CONTAINER_SELECTOR = '#chat-log';           // The entire chat area
+const MESSAGE_SELECTOR = '.message';                   // A single message bubble
+const ATTACHMENT_SELECTOR = '.attachment-preview';     // The attachment itself inside a message
+const AI_MESSAGE_SELECTOR = '.ai-message';             // A message from the AI
 
-    // State management
-    const SETTINGS_KEY = 'attachment_remover_settings';
-    let settings = { enabled: false };
+// --- EXTENSION STATE ---
+const SETTINGS_KEY = 'attachment_remover_settings';
+const DEFAULT_SETTINGS = { enabled: false };
+let settings = { ...DEFAULT_SETTINGS };
 
-    function loadSettings() {
-        const stored = localStorage.getItem(SETTINGS_KEY);
-        if (stored) {
-            settings = { ...settings, ...JSON.parse(stored) };
-        }
-    }
+// --- CORE LOGIC ---
+function processNewMessages() {
+    if (!settings.enabled) return;
 
-    function saveSettings() {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    }
+    const chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR);
+    if (!chatContainer) return;
 
-    // Core removal logic
-    function removePreviousAttachments() {
-        if (!settings.enabled) return;
+    const messages = chatContainer.querySelectorAll(MESSAGE_SELECTOR);
+    if (messages.length < 2) return;
 
-        const chatContainer = document.querySelector(SELECTORS.CHAT_CONTAINER);
-        if (!chatContainer) return;
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.matches(AI_MESSAGE_SELECTOR)) {
+        console.log('[Attachment Remover] AI response detected. Checking for attachments to remove.');
 
-        const messages = chatContainer.querySelectorAll(SELECTORS.MESSAGE_BLOCK);
-        if (messages.length < 2) return;
+        for (let i = messages.length - 2; i >= 0; i--) {
+            const userMessage = messages[i];
+            if (userMessage.matches(AI_MESSAGE_SELECTOR)) break; // Stop if we hit a previous AI message
 
-        const lastMessage = messages[messages.length - 1];
-        if (lastMessage.matches(SELECTORS.AI_MESSAGE_IDENTIFIER)) {
-            // An AI message was just posted. Now look at the message before it.
-            const userMessage = messages[messages.length - 2];
-            
-            // Check if the message before the AI's is NOT an AI message (i.e., it's a user message)
-            if (!userMessage.matches(SELECTORS.AI_MESSAGE_IDENTIFIER)) {
-                const attachments = userMessage.querySelectorAll(SELECTORS.ATTACHMENT_PREVIEW);
-                if (attachments.length > 0) {
-                    console.log(`Attachment Remover: AI response detected. Removing ${attachments.length} attachment(s) from previous message.`);
-                    attachments.forEach(att => att.remove());
-                }
+            const attachments = userMessage.querySelectorAll(ATTACHMENT_SELECTOR);
+            if (attachments.length > 0) {
+                attachments.forEach(attachment => {
+                    console.log('[Attachment Remover] Removing attachment:', attachment);
+                    attachment.remove(); // This is where the magic happens.
+                });
+                // Once we find and remove attachments from a user message, we stop.
+                // This prevents it from continuing to scan up the whole chat history.
+                break;
             }
         }
     }
+}
 
-    // UI setup for the settings panel
-    function setupSettingsUI() {
-        const enableCheckbox = document.getElementById('attachment_remover_enable');
-        if (enableCheckbox) {
-            enableCheckbox.checked = settings.enabled;
-            enableCheckbox.addEventListener('change', (event) => {
-                settings.enabled = event.target.checked;
-                saveSettings();
-                console.log(`Attachment Remover: Feature ${settings.enabled ? 'ENABLED' : 'DISABLED'}.`);
-            });
+// --- DOM OBSERVER ---
+const observer = new MutationObserver(mutations => {
+    for (const mutation of mutations) {
+        if (mutation.addedNodes.length > 0) {
+            // A short delay ensures the DOM is fully updated before we check it.
+            setTimeout(processNewMessages, 150);
+            return;
         }
     }
+});
 
-    // Observe the chat for new messages
-    function startObserver() {
-        const chatContainer = document.querySelector(SELECTORS.CHAT_CONTAINER);
-        if (chatContainer) {
-            const observer = new MutationObserver((mutations) => {
-                for (const mutation of mutations) {
-                    if (mutation.addedNodes.length > 0) {
-                        // A new message was added. Check if we need to remove an attachment.
-                        // A small delay ensures the DOM is fully updated.
-                        setTimeout(removePreviousAttachments, 100);
-                        break; 
-                    }
-                }
-            });
-            observer.observe(chatContainer, { childList: true });
-            console.log('Attachment Remover: Now observing the chat for new messages.');
-        } else {
-            // Retry if chat isn't loaded yet
-            setTimeout(startObserver, 500);
-        }
-    }
-
-    // Initialize the extension
-    function init() {
-        loadSettings();
-        setupSettingsUI();
-        startObserver();
-        console.log('Attachment Remover: Extension Loaded.');
-    }
-
-    // Wait for the DOM to be ready before initializing
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+function startObserver() {
+    const chatContainer = document.querySelector(CHAT_CONTAINER_SELECTOR);
+    if (chatContainer) {
+        observer.observe(chatContainer, { childList: true });
+        console.log('[Attachment Remover] Observer started.');
     } else {
-        init();
+        // If chat isn't loaded yet, try again.
+        setTimeout(startObserver, 500);
     }
-})();
+}
+
+// --- SETTINGS UI ---
+function onSettingsChange() {
+    settings.enabled = document.getElementById('attachment_remover_enable').checked;
+    extension_settings.attachment_remover = settings;
+    console.log(`[Attachment Remover] Settings updated. Enabled: ${settings.enabled}`);
+}
+
+function onSettingsDivRender(div) {
+    // This is how you load external HTML and CSS into the settings panel.
+    const context = getContext();
+    const settingsHtmlPath = `extensions/attachment_remover/settings.html`;
+    const settingsCssPath = `extensions/attachment_remover/styles.css`;
+
+    // Load CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = settingsCssPath;
+    document.head.appendChild(link);
+
+    // Load HTML
+    fetch(settingsHtmlPath)
+        .then(response => response.text())
+        .then(html => {
+            div.innerHTML = html;
+            // Now that the HTML is loaded, connect the UI elements
+            document.getElementById('attachment_remover_enable').checked = settings.enabled;
+            document.getElementById('attachment_remover_enable').addEventListener('change', onSettingsChange);
+        })
+        .catch(error => {
+            console.error('[Attachment Remover] Failed to load settings HTML.', error);
+            div.innerHTML = '<p>Error loading Attachment Remover settings.</p>';
+        });
+}
+
+// --- INITIALIZATION ---
+(function() {
+    // Load saved settings when the extension starts.
+    settings = { ...DEFAULT_SETTINGS, ...extension_settings.attachment_remover };
+
+    // Register the function that will build the settings UI
+    this.onSettingsDivRender = onSettingsDivRender;
+
+    // Start the observer to watch the chat.
+    startObserver();
+    console.log('[Attachment Remover] Extension loaded.');
+}).call(this);
