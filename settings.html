@@ -1,226 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attachment Cleaner | SillyTavern Extension</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Attachment Cleaner Settings</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="extension-container">
+    <div class="container">
         <header>
-            <div class="logo">
-                <div class="logo-icon">AC</div>
-                <div class="title">
-                    <h1>Attachment Cleaner</h1>
-                    <p>SillyTavern Extension</p>
-                </div>
-            </div>
+            <h1>Attachment Cleaner Settings</h1>
             <div class="status-indicator">
-                <span>Extension Status:</span>
-                <div class="status-dot" id="statusDot"></div>
-                <span id="statusText">Disabled</span>
+                <span id="statusDot" class="status-dot"></span>
+                Status: <span id="statusText" class="status-text">Disabled</span>
             </div>
         </header>
-        
-        <div class="card">
-            <div class="card-header">
-                <div>
-                    <h2 class="card-title">Attachment Management</h2>
-                    <p class="card-description">
-                        Automatically remove file attachments (PDF, DOC, ZIP, etc.) from chat messages while preserving images. 
-                        Keep your chat clean and focused on the conversation.
-                    </p>
-                </div>
-                <div class="toggle-container">
-                    <span class="toggle-label">Enable Extension</span>
-                    <label class="switch">
-                        <input type="checkbox" id="extensionToggle">
-                        <span class="slider"></span>
-                    </label>
-                </div>
+
+        <section class="settings-section">
+            <h2>General Settings</h2>
+            <div class="setting-item">
+                <label for="extensionToggle">Enable Attachment Cleaner</label>
+                <input type="checkbox" id="extensionToggle">
             </div>
-            
-            <div class="preview-section">
-                <div class="preview-box">
-                    <div class="preview-title">
-                        <i>📎</i> Original Chat with Attachments
-                    </div>
-                    <div class="chat-container">
-                        <div class="message user-message">
-                            <div>Here's the document you requested!</div>
-                            <div class="attachment" data-type="pdf">
-                                <div class="attachment-icon">📄</div>
-                                <div class="attachment-info">
-                                    <div class="attachment-name">Project_Report.pdf</div>
-                                    <div class="attachment-size">2.4 MB</div>
-                                </div>
-                            </div>
-                            <div class="attachment" data-type="image">
-                                <div class="attachment-icon">📷</div>
-                                <div class="attachment-info">
-                                    <div class="attachment-name">diagram.png</div>
-                                    <div class="attachment-size">850 KB</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="message bot-message">
-                            <div>Thanks! I've also attached the presentation</div>
-                            <div class="attachment" data-type="spreadsheet">
-                                <div class="attachment-icon">📊</div>
-                                <div class="attachment-info">
-                                    <div class="attachment-name">Analysis_Data.xlsx</div>
-                                    <div class="attachment-size">3.1 MB</div>
-                                </div>
-                            </div>
-                            <div class="attachment" data-type="image">
-                                <div class="attachment-icon">📷</div>
-                                <div class="attachment-info">
-                                    <div class="attachment-name">chart.jpg</div>
-                                    <div class="attachment-size">720 KB</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="preview-box">
-                    <div class="preview-title">
-                        <i>✨</i> Cleaned Chat (Extension Active)
-                    </div>
-                    <div class="chat-container" id="cleanedChat">
-                        <!-- Will be populated by JavaScript -->
-                    </div>
-                </div>
+            <div class="setting-item">
+                <label for="preserveImages">Preserve Images</label>
+                <input type="checkbox" id="preserveImages">
             </div>
-            
-            <div class="file-types">
-                <div class="file-type" data-type="pdf">
-                    <div class="file-icon">📄</div>
-                    <div class="file-name">PDF Files</div>
-                </div>
-                <div class="file-type" data-type="doc">
-                    <div class="file-icon">📝</div>
-                    <div class="file-name">DOC/DOCX</div>
-                </div>
-                <div class="file-type" data-type="spreadsheet">
-                    <div class="file-icon">📊</div>
-                    <div class="file-name">XLS/XLSX</div>
-                </div>
-                <div class="file-type" data-type="archive">
-                    <div class="file-icon">📂</div>
-                    <div class="file-name">ZIP/RAR</div>
-                </div>
-                <div class="file-type" data-type="audio">
-                    <div class="file-icon">🎵</div>
-                    <div class="file-name">MP3/WAV</div>
-                </div>
-                <div class="file-type" data-type="video">
-                    <div class="file-icon">🎬</div>
-                    <div class="file-name">MP4/AVI</div>
-                </div>
+            <div class="setting-item">
+                <label for="showNotifications">Show Notifications</label>
+                <input type="checkbox" id="showNotifications">
             </div>
-            
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-number" id="filesRemoved">0</div>
-                    <div class="stat-label">Files Removed</div>
+        </section>
+
+        <section class="settings-section">
+            <h2>Exception List</h2>
+            <button id="configureBtn" class="btn secondary-btn">Configure Exceptions</button>
+            <div id="exceptionPanel" class="exception-panel" style="display: none;">
+                <p>Files with these extensions will NOT be removed:</p>
+                <div id="exceptionList" class="exception-list">
+                    <!-- Exception items will be rendered here by JavaScript -->
                 </div>
-                <div class="stat">
-                    <div class="stat-number" id="storageSaved">0%</div>
-                    <div class="stat-label">Storage Saved</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number" id="imagesKept">0</div>
-                    <div class="stat-label">Images Kept</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2 class="card-title">Settings & Options</h2>
-            <p class="card-description">Customize how the extension handles attachments in your chats</p>
-            
-            <div class="settings-option">
-                <div class="option-label">
-                    <div class="option-title">Preserve Image Attachments</div>
-                    <div class="option-description">Image files (JPG, PNG, GIF) will always be preserved</div>
-                </div>
-                <div class="toggle-container">
-                    <label class="switch">
-                        <input type="checkbox" id="preserveImages" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-            
-            <div class="settings-option">
-                <div class="option-label">
-                    <div class="option-title">Show Removal Notifications</div>
-                    <div class="option-description">Display a notification when attachments are removed</div>
-                </div>
-                <div class="toggle-container">
-                    <label class="switch">
-                        <input type="checkbox" id="showNotifications" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-            
-            <div class="settings-option">
-                <div class="option-label">
-                    <div class="option-title">File Type Exceptions</div>
-                    <div class="option-description">Specify file types that should never be removed</div>
-                </div>
-                <div class="toggle-container">
-                    <button class="btn btn-secondary" id="configureBtn">Configure</button>
-                </div>
-            </div>
-            
-            <div id="exceptionPanel" style="display: none;">
-                <div class="file-exception-list" id="exceptionList">
-                    <div class="exception-item">
-                        <span>.txt files</span>
-                        <span class="remove-exception">✕</span>
-                    </div>
-                    <div class="exception-item">
-                        <span>.md files</span>
-                        <span class="remove-exception">✕</span>
-                    </div>
-                </div>
-                
                 <div class="add-exception">
-                    <input type="text" id="newException" placeholder="Enter file extension (e.g., .pdf)">
-                    <button id="addExceptionBtn">Add</button>
+                    <input type="text" id="newException" placeholder="e.g., .jpg">
+                    <button id="addExceptionBtn" class="btn primary-btn">Add Exception</button>
                 </div>
             </div>
-            
-            <div class="action-buttons">
-                <button class="btn btn-primary" id="saveSettings">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/>
-                    </svg>
-                    Save Settings
-                </button>
-                <button class="btn btn-secondary" id="testBtn">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M6 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm-1 0a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0z"/>
-                        <path d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1zm0 5.586 7 7L13.586 9l-7-7H2v4.586z"/>
-                    </svg>
-                    Test Extension
-                </button>
+        </section>
+
+        <section class="settings-section">
+             <h2>Statistics</h2>
+             <div class="stats-grid">
+                 <div class="stat-item">
+                     Files Removed: <span id="filesRemoved">0</span>
+                 </div>
+                 <div class="stat-item">
+                     Images Kept: <span id="imagesKept">0</span>
+                 </div>
+                  <div class="stat-item">
+                     Storage Saved: <span id="storageSaved">0%</span>
+                 </div>
+             </div>
+         </section>
+
+        <section class="settings-section">
+            <h2>Preview</h2>
+            <div id="cleanedChat" class="chat-preview">
+                <!-- Chat preview will be rendered here by JavaScript -->
             </div>
-        </div>
+        </section>
+
+        <section class="settings-section">
+            <button id="saveSettings" class="btn primary-btn">Save Settings</button>
+            <button id="testBtn" class="btn secondary-btn">Run Test</button>
+        </section>
     </div>
-    
-    <div class="notification" id="notification">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-        </svg>
-        <span id="notificationText">Settings saved successfully!</span>
+
+    <div id="notification" class="notification">
+        <span id="notificationText"></span>
     </div>
-    
+
     <script src="index.js"></script>
 </body>
 </html>
