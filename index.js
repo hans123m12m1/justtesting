@@ -481,7 +481,7 @@ async function loadSettingsHtml() {
 }
 
 function loadSettingsCss() {
-    const cssPath = `${EXTENSION_FOLDER_PATH}/style.css`;
+       const cssPath = `${EXTENSION_FOLDER_PATH}/style.css`;
     const existingLink = document.querySelector(`link[href="${cssPath}"]`);
     
     if (!existingLink) {
