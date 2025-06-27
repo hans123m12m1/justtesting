@@ -1,12 +1,16 @@
 {
-    "display_name": "attachment_remover",
-    "author": "@justkuru",
-    "version": "5.3.1",
-    "description": "dont mind me",
+    "display_name": "disappointment",
+    "loading_order": 1000,
     "requires": [],
     "optional": [],
-    "js": "content.js",
-    "css": "styles.css",
+    "dependencies": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "tester",
+    "version": "1.0.0",
     "homePage": "https://github.com/hans123m12m1/justtesting",
-    "loading_order": 1000
+    "auto_update": true,
+    "i18n": {
+        "de-de": "i18n/de-de.json"
+    }
 }
