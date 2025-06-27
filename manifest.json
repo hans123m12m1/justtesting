@@ -1,11 +1,11 @@
 {
-    "display_name": "attachment remover",
+    "display_name": "attachment_remover",
     "loading_order": 1000,
     "requires": [],
     "optional": [],
     "dependencies": [],
     "js": "index.js",
-    "css": "",
+    "css": "style.css",
     "author": "Your name",
     "version": "1.0.0",
     "homePage": "https://github.com/hans123m12m1/justtesting",
