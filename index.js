@@ -480,22 +480,10 @@ async function loadSettingsHtml() {
     }
 }
 
-function loadSettingsCss() {
-       const cssPath = `${EXTENSION_FOLDER_PATH}/style.css`;
-    const existingLink = document.querySelector(`link[href="${cssPath}"]`);
-    
-    if (!existingLink) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = cssPath;
-        link.onerror = () => log(`Failed to load CSS: ${cssPath}`, 'error');
-        document.head.appendChild(link);
-        log('CSS loaded successfully', 'debug');
-    }
-}
+// Removed loadSettingsCss function as CSS is now inline in settings.html
 
 async function onSettingsDivRender(div) {
-    loadSettingsCss();
+    // Removed call to loadSettingsCss()
     
     const html = await loadSettingsHtml();
     if (!html) {
