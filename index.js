@@ -1,30 +1,32 @@
-// index.js
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM Elements
-    const extensionToggle = document.getElementById('extensionToggle');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-    const saveBtn = document.getElementById('saveSettings');
-    const notification = document.getElementById('notification');
-    const notificationText = document.getElementById('notificationText');
-    const configureBtn = document.getElementById('configureBtn');
-    const exceptionPanel = document.getElementById('exceptionPanel');
-    const exceptionList = document.getElementById('exceptionList');
-    const newException = document.getElementById('newException');
-    const addExceptionBtn = document.getElementById('addExceptionBtn');
-    const testBtn = document.getElementById('testBtn');
-    const cleanedChat = document.getElementById('cleanedChat');
-    const filesRemoved = document.getElementById('filesRemoved');
-    const storageSaved = document.getElementById('storageSaved');
-    const imagesKept = document.getElementById('imagesKept');
-    const preserveImages = document.getElementById('preserveImages');
-    const showNotifications = document.getElementById('showNotifications');
+    // DOM Elements - Using a more robust way to get elements
+    const DOMElements = {
+        extensionToggle: document.getElementById('extensionToggle'),
+        statusDot: document.getElementById('statusDot'),
+        statusText: document.getElementById('statusText'),
+        saveBtn: document.getElementById('saveSettings'),
+        notification: document.getElementById('notification'),
+        notificationText: document.getElementById('notificationText'),
+        configureBtn: document.getElementById('configureBtn'),
+        exceptionPanel: document.getElementById('exceptionPanel'),
+        exceptionList: document.getElementById('exceptionList'),
+        newException: document.getElementById('newException'),
+        addExceptionBtn: document.getElementById('addExceptionBtn'),
+        testBtn: document.getElementById('testBtn'),
+        cleanedChat: document.getElementById('cleanedChat'),
+        filesRemoved: document.getElementById('filesRemoved'),
+        storageSaved: document.getElementById('storageSaved'),
+        imagesKept: document.getElementById('imagesKept'),
+        preserveImages: document.getElementById('preserveImages'),
+        showNotifications: document.getElementById('showNotifications')
+    };
 
-    // State
+    // State Variables
     let filesRemovedCount = 0;
     let imagesKeptCount = 0;
+    let currentExceptions = []; // To hold the parsed exceptions array
 
-    // Initialize
+    // Initialize function
     function init() {
         loadSettings();
         updateCleanedChatPreview();
@@ -33,28 +35,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load saved settings from localStorage
     function loadSettings() {
+        // General Settings
         const isEnabled = localStorage.getItem('attachmentCleanerEnabled') === 'true';
-        if (extensionToggle) { // Add checks to ensure elements exist
-            extensionToggle.checked = isEnabled;
+        if (DOMElements.extensionToggle) {
+            DOMElements.extensionToggle.checked = isEnabled;
             updateStatus(isEnabled);
         }
 
         const preserveImagesSetting = localStorage.getItem('preserveImages');
-        if (preserveImages && preserveImagesSetting !== null) { // Add checks
-            preserveImages.checked = preserveImagesSetting === 'true';
+        if (DOMElements.preserveImages && preserveImagesSetting !== null) {
+            DOMElements.preserveImages.checked = preserveImagesSetting === 'true';
         }
 
         const showNotificationsSetting = localStorage.getItem('showNotifications');
-        if (showNotifications && showNotificationsSetting !== null) { // Add checks
-            showNotifications.checked = showNotificationsSetting === 'true';
+        if (DOMElements.showNotifications && showNotificationsSetting !== null) {
+            DOMElements.showNotifications.checked = showNotificationsSetting === 'true';
         }
 
-        // FIX: Corrected syntax for JSON.parse and default value
-        const exceptions = JSON.parse(localStorage.getItem('exceptions') || '[]') || ['.txt', '.md'];
-        renderExceptions(exceptions);
+        // Exceptions - Corrected default and parsing
+        try {
+            const storedExceptions = localStorage.getItem('exceptions');
+            currentExceptions = storedExceptions ? JSON.parse(storedExceptions) : ['.txt', '.md'];
+            // Ensure it's an array and contains valid strings
+            if (!Array.isArray(currentExceptions) || !currentExceptions.every(item => typeof item === 'string')) {
+                currentExceptions = ['.txt', '.md']; // Fallback if storage is corrupt
+            }
+        } catch (e) {
+            console.error("Error parsing exceptions from localStorage, using default.", e);
+            currentExceptions = ['.txt', '.md']; // Fallback on parsing error
+        }
+        renderExceptions(currentExceptions);
 
         // Load stats
-        // FIX: Corrected syntax for parseInt and added radix
         filesRemovedCount = parseInt(localStorage.getItem('filesRemovedCount') || '0', 10);
         imagesKeptCount = parseInt(localStorage.getItem('imagesKeptCount') || '0', 10);
         updateStats();
@@ -62,89 +74,85 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update status display
     function updateStatus(enabled) {
-        if (statusDot && statusText) { // Add checks
-            if (enabled) {
-                statusDot.classList.add('active');
-                statusText.textContent = 'Enabled';
-                statusText.style.color = '#4caf50';
-            } else {
-                statusDot.classList.remove('active');
-                statusText.textContent = 'Disabled';
-                statusText.style.color = '#f44336';
-            }
+        if (DOMElements.statusDot && DOMElements.statusText) {
+            DOMElements.statusDot.classList.toggle('active', enabled);
+            DOMElements.statusText.textContent = enabled ? 'Enabled' : 'Disabled';
         }
     }
 
     // Update statistics display
     function updateStats() {
-        if (filesRemoved && imagesKept && storageSaved) { // Add checks
-            filesRemoved.textContent = filesRemovedCount;
-            imagesKept.textContent = imagesKeptCount;
-            storageSaved.textContent = Math.min(100, Math.floor(filesRemovedCount * 1.5)) + '%';
+        if (DOMElements.filesRemoved && DOMElements.imagesKept && DOMElements.storageSaved) {
+            DOMElements.filesRemoved.textContent = filesRemovedCount;
+            DOMElements.imagesKept.textContent = imagesKeptCount;
+            // Simplified storage saved calculation for demonstration
+            DOMElements.storageSaved.textContent = `${Math.min(100, Math.floor(filesRemovedCount * 1.5))} MB Saved`; // Changed to MB for a more realistic feel
         }
     }
 
     // Render exceptions list
     function renderExceptions(exceptions) {
-        if (exceptionList) { // Add checks
-            exceptionList.innerHTML = '';
+        if (DOMElements.exceptionList) {
+            DOMElements.exceptionList.innerHTML = '';
             exceptions.forEach(ext => {
                 const item = document.createElement('div');
                 item.className = 'exception-item';
                 item.innerHTML = `
                     <span>${ext} files</span>
-                    <span class="remove-exception">✕</span>
+                    <span class="remove-exception" data-extension="${ext}">✕</span>
                 `;
-                exceptionList.appendChild(item);
+                DOMElements.exceptionList.appendChild(item);
             });
 
-            // Add event listeners to remove buttons
-            document.querySelectorAll('.remove-exception').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.closest('.exception-item').remove();
-                    showNotification('Exception removed!');
-                    saveExceptions();
-                });
+            // Attach event listeners to remove buttons
+            DOMElements.exceptionList.querySelectorAll('.remove-exception').forEach(btn => {
+                btn.addEventListener('click', handleRemoveException);
             });
         }
+    }
+
+    // Handle removing an exception
+    function handleRemoveException(event) {
+        const extToRemove = event.target.dataset.extension;
+        currentExceptions = currentExceptions.filter(ext => ext !== extToRemove);
+        saveExceptions();
+        renderExceptions(currentExceptions); // Re-render the list
+        showNotification('Exception removed!');
     }
 
     // Save exceptions to localStorage
     function saveExceptions() {
-        if (exceptionList) { // Add checks
-            const exceptions = Array.from(exceptionList.querySelectorAll('.exception-item span:first-child'))
-                .map(el => el.textContent.replace(' files', ''));
-            localStorage.setItem('exceptions', JSON.stringify(exceptions));
-        }
+        localStorage.setItem('exceptions', JSON.stringify(currentExceptions));
     }
 
     // Show notification
     function showNotification(message) {
-        if (notification && notificationText && showNotifications && showNotifications.checked) { // Add checks and check notification setting
-            notificationText.textContent = message;
-            notification.classList.add('show');
+        if (DOMElements.notification && DOMElements.notificationText && DOMElements.showNotifications && DOMElements.showNotifications.checked) {
+            DOMElements.notificationText.textContent = message;
+            DOMElements.notification.classList.add('show');
 
             setTimeout(() => {
-                notification.classList.remove('show');
+                DOMElements.notification.classList.remove('show');
             }, 3000);
         }
     }
 
     // Update the cleaned chat preview
     function updateCleanedChatPreview() {
-        if (cleanedChat) { // Add checks
-            cleanedChat.innerHTML = '';
+        if (DOMElements.cleanedChat) {
+            DOMElements.cleanedChat.innerHTML = '';
+
+            const preserveImagesChecked = DOMElements.preserveImages ? DOMElements.preserveImages.checked : false;
 
             // User message
             const userMessage = document.createElement('div');
             userMessage.className = 'message user-message';
-            userMessage.innerHTML = `
-                <div>Here's the document you requested!</div>
-            `;
+            userMessage.innerHTML = `<div>Here's the document you requested!</div>`;
+            DOMElements.cleanedChat.appendChild(userMessage);
 
-            // PDF attachment (should be removed)
+            // PDF attachment (should be removed by default)
             const pdfAttachment = document.createElement('div');
-            pdfAttachment.className = 'attachment removed';
+            pdfAttachment.className = 'attachment removed'; // Always removed for preview
             pdfAttachment.dataset.type = 'pdf';
             pdfAttachment.innerHTML = `
                 <div class="attachment-icon">📄</div>
@@ -155,10 +163,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             userMessage.appendChild(pdfAttachment);
 
-            // Image attachment (should be preserved)
+            // Image attachment (status depends on 'Preserve Images' setting)
             const imageAttachment = document.createElement('div');
-             // Add condition to preserve images based on setting
-            imageAttachment.className = 'attachment' + (preserveImages && preserveImages.checked ? '' : ' removed');
+            imageAttachment.className = 'attachment' + (preserveImagesChecked ? '' : ' removed');
             imageAttachment.dataset.type = 'image';
             imageAttachment.innerHTML = `
                 <div class="attachment-icon">📷</div>
@@ -169,18 +176,15 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             userMessage.appendChild(imageAttachment);
 
-            cleanedChat.appendChild(userMessage);
-
             // Bot message
             const botMessage = document.createElement('div');
             botMessage.className = 'message bot-message';
-            botMessage.innerHTML = `
-                <div>Thanks! I've also attached the presentation</div>
-            `;
+            botMessage.innerHTML = `<div>Thanks! I've also attached the presentation</div>`;
+            DOMElements.cleanedChat.appendChild(botMessage);
 
-            // Spreadsheet attachment (should be removed)
+            // Spreadsheet attachment (should be removed by default)
             const spreadsheetAttachment = document.createElement('div');
-            spreadsheetAttachment.className = 'attachment removed';
+            spreadsheetAttachment.className = 'attachment removed'; // Always removed for preview
             spreadsheetAttachment.dataset.type = 'spreadsheet';
             spreadsheetAttachment.innerHTML = `
                 <div class="attachment-icon">📊</div>
@@ -191,10 +195,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             botMessage.appendChild(spreadsheetAttachment);
 
-            // Image attachment (should be preserved)
+            // Another Image attachment (status depends on 'Preserve Images' setting)
             const imageAttachment2 = document.createElement('div');
-             // Add condition to preserve images based on setting
-            imageAttachment2.className = 'attachment' + (preserveImages && preserveImages.checked ? '' : ' removed');
+            imageAttachment2.className = 'attachment' + (preserveImagesChecked ? '' : ' removed');
             imageAttachment2.dataset.type = 'image';
             imageAttachment2.innerHTML = `
                 <div class="attachment-icon">📷</div>
@@ -204,40 +207,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             botMessage.appendChild(imageAttachment2);
-
-            cleanedChat.appendChild(botMessage);
         }
     }
 
     // Simulate attachment cleaning
     function simulateAttachmentCleaning() {
-         // This simulation logic might need adjustment based on your actual cleaning logic
-        filesRemovedCount += 2; // Assuming 2 files are removed in the simulation
-        imagesKeptCount += (preserveImages && preserveImages.checked ? 2 : 0); // Assuming 2 images are kept if preserveImages is checked
+        const preserveImagesChecked = DOMElements.preserveImages ? DOMElements.preserveImages.checked : false;
+
+        // Simulate removing 2 non-image files and keeping 2 images if setting is on
+        filesRemovedCount += 2; // PDF and Spreadsheet
+        imagesKeptCount += (preserveImagesChecked ? 2 : 0); // Both images kept if setting is true
+
         localStorage.setItem('filesRemovedCount', filesRemovedCount);
         localStorage.setItem('imagesKeptCount', imagesKeptCount);
+
         updateStats();
-        showNotification(`Test completed! ${filesRemovedCount} attachments removed, ${imagesKeptCount} images preserved`);
+        showNotification(`Test completed! ${filesRemovedCount} attachments removed, ${imagesKeptCount} images preserved.`);
+        updateCleanedChatPreview(); // Refresh preview based on current settings
     }
 
+    // Save all settings to localStorage
+    function saveAllSettings() {
+        if (DOMElements.extensionToggle && DOMElements.preserveImages && DOMElements.showNotifications) {
+            localStorage.setItem('attachmentCleanerEnabled', DOMElements.extensionToggle.checked);
+            localStorage.setItem('preserveImages', DOMElements.preserveImages.checked);
+            localStorage.setItem('showNotifications', DOMElements.showNotifications.checked);
+            // Exceptions are saved automatically by render/add/remove functions
 
-    // Save settings
-    function saveSettings() {
-        if (extensionToggle && preserveImages && showNotifications && exceptionList) { // Add checks
-            const settings = {
-                enabled: extensionToggle.checked,
-                preserveImages: preserveImages.checked,
-                showNotifications: showNotifications.checked,
-                exceptions: Array.from(exceptionList.querySelectorAll('.exception-item span:first-child'))
-                    .map(el => el.textContent.replace(' files', ''))
-            };
-
-            localStorage.setItem('attachmentCleanerEnabled', settings.enabled);
-            localStorage.setItem('preserveImages', settings.preserveImages);
-            localStorage.setItem('showNotifications', settings.showNotifications);
-            localStorage.setItem('exceptions', JSON.stringify(settings.exceptions));
-
-            updateStatus(settings.enabled);
+            updateStatus(DOMElements.extensionToggle.checked);
+            updateCleanedChatPreview(); // Update preview in case preserveImages changed
             showNotification('Settings saved successfully!');
         }
     }
@@ -245,8 +243,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Attach event listeners
     function attachEventListeners() {
         // Toggle extension status
-        if (extensionToggle) { // Add checks
-            extensionToggle.addEventListener('change', function() {
+        if (DOMElements.extensionToggle) {
+            DOMElements.extensionToggle.addEventListener('change', function() {
                 const enabled = this.checked;
                 localStorage.setItem('attachmentCleanerEnabled', enabled);
                 updateStatus(enabled);
@@ -254,39 +252,49 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
+        // Preserve Images setting change
+        if (DOMElements.preserveImages) {
+            DOMElements.preserveImages.addEventListener('change', function() {
+                localStorage.setItem('preserveImages', this.checked);
+                updateCleanedChatPreview(); // Update preview immediately
+                showNotification(`Preserve Images ${this.checked ? 'enabled' : 'disabled'}`);
+            });
+        }
+
+        // Show Notifications setting change
+        if (DOMElements.showNotifications) {
+            DOMElements.showNotifications.addEventListener('change', function() {
+                localStorage.setItem('showNotifications', this.checked);
+                showNotification(`Notifications ${this.checked ? 'enabled' : 'disabled'}`);
+            });
+        }
+
         // Configure exceptions button
-        if (configureBtn && exceptionPanel) { // Add checks
-            configureBtn.addEventListener('click', function() {
-                exceptionPanel.style.display = exceptionPanel.style.display === 'none' ? 'block' : 'none';
+        if (DOMElements.configureBtn && DOMElements.exceptionPanel) {
+            DOMElements.configureBtn.addEventListener('click', function() {
+                const isHidden = DOMElements.exceptionPanel.style.display === 'none';
+                DOMElements.exceptionPanel.style.display = isHidden ? 'block' : 'none';
+                this.textContent = isHidden ? 'Hide Exceptions' : 'Configure Exceptions';
+                this.querySelector('.btn-icon').textContent = isHidden ? '➖' : '📋'; // Update icon
             });
         }
 
         // Add new exception
-        if (addExceptionBtn && newException && exceptionList) { // Add checks
-            addExceptionBtn.addEventListener('click', function() {
-                const ext = newException.value.trim();
-                if (ext && !Array.from(exceptionList.querySelectorAll('.exception-item span:first-child')).map(el => el.textContent.replace(' files', '')).includes(ext)) {
-                    // FIX: Added a basic structure for adding a new exception
-                    const item = document.createElement('div');
-                    item.className = 'exception-item';
-                    item.innerHTML = `
-                        <span>${ext} files</span>
-                        <span class="remove-exception">✕</span>
-                    `;
-                    exceptionList.appendChild(item);
+        if (DOMElements.addExceptionBtn && DOMElements.newException && DOMElements.exceptionList) {
+            DOMElements.addExceptionBtn.addEventListener('click', function() {
+                let ext = DOMElements.newException.value.trim().toLowerCase();
+                if (!ext.startsWith('.')) { // Ensure it starts with a dot
+                    ext = '.' + ext;
+                }
 
-                    // Add event listener to the new remove button
-                    item.querySelector('.remove-exception').addEventListener('click', function() {
-                         this.closest('.exception-item').remove();
-                         showNotification('Exception removed!');
-                         saveExceptions();
-                    });
-
-                    newException.value = ''; // Clear the input field
+                if (ext && !currentExceptions.includes(ext)) {
+                    currentExceptions.push(ext);
+                    saveExceptions();
+                    renderExceptions(currentExceptions); // Re-render the list to show new item
+                    DOMElements.newException.value = ''; // Clear input
                     showNotification('Exception added!');
-                    saveExceptions(); // Save the updated exceptions list
                 } else if (ext) {
-                    showNotification('Exception already exists.');
+                    showNotification('Exception already exists or invalid.');
                 } else {
                     showNotification('Please enter a file extension.');
                 }
@@ -294,13 +302,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Save settings button
-        if (saveBtn) { // Add checks
-            saveBtn.addEventListener('click', saveSettings);
+        if (DOMElements.saveBtn) {
+            DOMElements.saveBtn.addEventListener('click', saveAllSettings);
         }
 
         // Test button
-        if (testBtn) { // Add checks
-            testBtn.addEventListener('click', simulateAttachmentCleaning);
+        if (DOMElements.testBtn) {
+            DOMElements.testBtn.addEventListener('click', simulateAttachmentCleaning);
         }
     }
 

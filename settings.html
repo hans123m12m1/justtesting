@@ -1,13 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Attachment Cleaner Settings</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SillyTavern Attachment Cleaner Settings</title>
+    <!-- Consider adding a modern font, e.g., Google Fonts' Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <main class="container">
         <header>
-            <h1>Attachment Cleaner Settings</h1>
+            <h1>SillyTavern Attachment Cleaner</h1>
             <div class="status-indicator">
                 <span id="statusDot" class="status-dot"></span>
                 Status: <span id="statusText" class="status-text">Disabled</span>
@@ -18,62 +22,80 @@
             <h2>General Settings</h2>
             <div class="setting-item">
                 <label for="extensionToggle">Enable Attachment Cleaner</label>
-                <input type="checkbox" id="extensionToggle">
+                <label class="switch">
+                    <input type="checkbox" id="extensionToggle">
+                    <span class="slider"></span>
+                </label>
             </div>
             <div class="setting-item">
-                <label for="preserveImages">Preserve Images</label>
-                <input type="checkbox" id="preserveImages">
+                <label for="preserveImages">Preserve Images in Chat</label>
+                <label class="switch">
+                    <input type="checkbox" id="preserveImages">
+                    <span class="slider"></span>
+                </label>
             </div>
             <div class="setting-item">
-                <label for="showNotifications">Show Notifications</label>
-                <input type="checkbox" id="showNotifications">
+                <label for="showNotifications">Show Notifications on Actions</label>
+                <label class="switch">
+                    <input type="checkbox" id="showNotifications">
+                    <span class="slider"></span>
+                </label>
             </div>
         </section>
 
         <section class="settings-section">
             <h2>Exception List</h2>
-            <button id="configureBtn" class="btn secondary-btn">Configure Exceptions</button>
+            <button id="configureBtn" class="btn secondary-btn">
+                <span class="btn-icon">📋</span> Configure Exceptions
+            </button>
             <div id="exceptionPanel" class="exception-panel" style="display: none;">
-                <p>Files with these extensions will NOT be removed:</p>
+                <p>Files with these extensions will <b>NOT</b> be removed:</p>
                 <div id="exceptionList" class="exception-list">
                     <!-- Exception items will be rendered here by JavaScript -->
                 </div>
                 <div class="add-exception">
-                    <input type="text" id="newException" placeholder="e.g., .jpg">
-                    <button id="addExceptionBtn" class="btn primary-btn">Add Exception</button>
+                    <input type="text" id="newException" placeholder="e.g., .zip, .mp3">
+                    <button id="addExceptionBtn" class="btn primary-btn">
+                        <span class="btn-icon">➕</span> Add Exception
+                    </button>
                 </div>
             </div>
         </section>
 
         <section class="settings-section">
-             <h2>Statistics</h2>
-             <div class="stats-grid">
-                 <div class="stat-item">
-                     Files Removed: <span id="filesRemoved">0</span>
-                 </div>
-                 <div class="stat-item">
-                     Images Kept: <span id="imagesKept">0</span>
-                 </div>
-                  <div class="stat-item">
-                     Storage Saved: <span id="storageSaved">0%</span>
-                 </div>
-             </div>
-         </section>
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    Files Removed: <span id="filesRemoved">0</span>
+                </div>
+                <div class="stat-item">
+                    Images Kept: <span id="imagesKept">0</span>
+                </div>
+                <div class="stat-item">
+                    Storage Saved: <span id="storageSaved">0%</span>
+                </div>
+            </div>
+        </section>
 
         <section class="settings-section">
-            <h2>Preview</h2>
+            <h2>Chat Preview</h2>
             <div id="cleanedChat" class="chat-preview">
                 <!-- Chat preview will be rendered here by JavaScript -->
             </div>
         </section>
 
-        <section class="settings-section">
-            <button id="saveSettings" class="btn primary-btn">Save Settings</button>
-            <button id="testBtn" class="btn secondary-btn">Run Test</button>
+        <section class="settings-actions">
+            <button id="saveSettings" class="btn primary-btn">
+                <span class="btn-icon">💾</span> Save All Settings
+            </button>
+            <button id="testBtn" class="btn secondary-btn">
+                <span class="btn-icon">🧪</span> Run Cleaning Simulation
+            </button>
         </section>
-    </div>
+    </main>
 
     <div id="notification" class="notification">
+        <span class="notification-icon">💬</span>
         <span id="notificationText"></span>
     </div>
 
