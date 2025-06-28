@@ -1,4 +1,24 @@
-/* Style for the auto-clear button */
+--- START OF FILE styles.css ---
+/* styles.css for AutoTranslateClear */
+
+/* --- CSS Variables --- */
+:root {
+    /* Map SillyTavern's theme variables to our extension's variables. */
+    /* The second value is a fallback in case the ST variable isn't defined. */
+    --auto-clear-primary-accent: var(--primary-accent, #6A5ACD); /* Using a purple accent */
+    --auto-clear-secondary-accent: var(--secondary-accent, #8A2BE2); /* Another purple shade */
+    --auto-clear-primary-bg: var(--secondary-bg, #2c2f33);
+    --auto-clear-secondary-bg: var(--main-bg, #232528);
+    --auto-clear-tertiary-bg: var(--tertiary-bg, #36393f);
+    --auto-clear-item-hover-bg: var(--tertiary-bg-with-hover, #40444b);
+    --auto-clear-text-color: var(--text-color, #dcddde);
+    --auto-clear-text-muted: var(--text-color-secondary, #b9bbbe);
+    --auto-clear-border-color: var(--border-color, #444);
+    --auto-clear-shadow-color: rgba(0, 0, 0, 0.3);
+    --auto-clear-glow-color: var(--primary-accent-glow, rgba(106, 90, 205, 0.7));
+}
+
+/* Style for the auto-clear button next to the wand icon */
 .auto-translate-clear-button {
     /* Inherit common button styles from SillyTavern */
     display: inline-flex;
@@ -12,6 +32,7 @@
     color: var(--text-color); /* Use SillyTavern's text color variable */
     font-size: 1em;
     transition: background-color 0.2s ease, color 0.2s ease;
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .auto-translate-clear-button:hover {
@@ -27,3 +48,80 @@
 .auto-translate-clear-button.fa-solid::before {
     line-height: 1;
 }
+
+/* General SillyTavern UI elements that might be affected by our styles */
+/* Ensure our styles don't bleed into other parts of ST */
+.inline-drawer-header {
+    background-color: var(--input-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color);
+}
+
+.inline-drawer-header:hover {
+    background-color: var(--button-hover-color);
+}
+
+.inline-drawer-icon {
+    transition: transform 0.2s ease;
+}
+
+.inline-drawer-icon.down {
+    transform: rotate(0deg);
+}
+
+.inline-drawer-icon.up {
+    transform: rotate(180deg);
+}
+
+.inline-drawer-content {
+    padding: 10px 0;
+    border-left: 1px solid var(--border-color);
+    margin-left: 10px;
+}
+
+/* Basic form group styling for consistency */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.text_pole {
+    background-color: var(--input-background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 8px;
+    border-radius: 5px;
+    width: calc(100% - 18px); /* Account for padding and border */
+}
+
+.menu_button {
+    background-color: var(--button-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+}
+
+.menu_button:hover {
+    background-color: var(--button-hover-color);
+}
+
+.menu_button:active {
+    background-color: var(--button-active-color);
+}
+
+/* Ensure FontAwesome icons are correctly sized */
+.fa-solid {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+}
+--- END OF FILE styles.css ---

@@ -1,0 +1,715 @@
+--- START OF FILE settings.html ---
+<div class="auto-clear-translation-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Auto Translate Clear Settings</b>
+            <div class="inline-drawer-icon fa-solid fa-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <div class="form-group">
+                <label for="autoClearToggle">Enable Auto-Clear Translations</label>
+                <label class="switch">
+                    <input type="checkbox" id="autoClearToggle">
+                    <span class="slider"></span>
+                </label>
+                <small>When enabled, translated chat messages will be automatically cleared shortly after appearing.</small>
+            </div>
+            <div class="form-group">
+                <label>Manually Clear All Translations</label>
+                <button id="clearAllButton" class="menu_button">
+                    <i class="fa-solid fa-eraser"></i> Clear All Now
+                </button>
+                <small>Clears all currently displayed translated messages in the chat.</small>
+            </div>
+            <div id="autoClearStatus" style="margin-top: 10px; font-style: italic;"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Basic styling for the toggle switch and buttons, adapted from previous response */
+    .auto-clear-translation-settings .form-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: var(--input-background-color); /* Similar to input fields */
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    }
+
+    .auto-clear-translation-settings .form-group label {
+        flex-grow: 1;
+        font-size: 1em
+
+---
+
+### 2. `settings.html` (New UI Panel)
+
+This file will be loaded as your extension's settings panel within SillyTavern. It contains the toggle for auto-clear and a button to manually clear translations. The styling and script for this panel are embedded directly for self-containment.
+
+```html
+--- START OF FILE settings.html ---
+<div class="auto-clear-translation-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Auto Translate Clear Settings</b>
+            <div class="inline-drawer-icon fa-solid fa-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <div class="form-group">
+                <label for="autoClearToggle">Enable Auto-Clear Translations</label>
+                <label class="switch">
+                    <input type="checkbox" id="autoClearToggle">
+                    <span class="slider"></span>
+                </label>
+                <small>When enabled, translated chat messages will be automatically cleared shortly after appearing.</small>
+            </div>
+            <div class="form-group">
+                <label>Manually Clear All Translations</label>
+                <button id="clearAllButton" class="menu_button">
+                    <i class="fa-solid fa-eraser"></i> Clear All Now
+                </button>
+                <small>Clears all currently displayed translated messages in the chat.</small>
+            </div>
+            <div id="autoClearStatus" style="margin-top: 10px; font-style: italic;"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Basic styling for the toggle switch and buttons, adapted from previous response */
+    .auto-clear-translation-settings .form-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: var(--input-background-color); /* Similar to input fields */
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    }
+
+    .auto-clear-translation-settings .form-group label {
+        flex-grow: 1;
+        font-size: 1em;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .auto-clear-translation-settings .form-group small {
+        flex-basis: 100%; /* Make small text take full width */
+        font-size: 0.8em;
+        color: var(--text-color-secondary);
+        margin-top: 5px;
+    }
+
+    /* Toggle Switch Styling */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+        flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position:;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .auto-clear-translation-settings .form-group small {
+        flex-basis: 100%; /* Make small text take full width */
+        font-size: 0.8em;
+        color: var(--text-color-secondary);
+        margin-top: 5px;
+    }
+
+    /* Toggle Switch Styling */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+        flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--button-color); /* Off state color */
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: var(--text-color); /* Handle color */
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: var(--accent-color); /* On state color */
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px var(--accent-color);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+
+    .auto-clear-translation-settings .menu_button {
+        background-color: var(--button-color);
+        color: var(--text-color);
+        border absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--button-color); /* Off state color */
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: var(--text-color); /* Handle color */
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: var(--accent-color); /* On state color */
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px var(--accent-color);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX: none;
+        border-radius: 5px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: background-color 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .auto-clear-translation-settings .menu_button:hover {
+        background-color: var(--button-hover-color);
+    }
+
+    .auto-clear-translation-settings .menu_button:active {
+        background-color: var(--button-active-color);
+    }
+
+    /* SillyTaver(24px);
+    }
+
+    .auto-clear-translation-settings .menu_button {
+        background-color: var(--button-color);
+        color: var(--text-color);
+        border: none;
+        border-radius: 5px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: backgroundn CSS variables (approximate, may vary slightly by theme) */
+    /* These are usually defined globally by SillyTavern, but good to have fallbacks */
+    :root {
+        --background-color: #222222;
+        --text-color: #DDDDDD;
+        --header-color: #EEEEEE;
+        --button-color: #444444;
+        -color 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .auto-clear-translation-settings .menu_button:hover {
+        background-color: var(--button-hover-color);
+    }
+
+    .auto-clear-translation-settings .menu_button:active {
+        background-color: var(--button-active-color);
+    }
+
+    /* SillyTaver--button-hover-color: #555555;
+        --button-active-color: #333333;
+        --accent-color: #6A5ACD; /* An CSS variables (approximate, may vary slightly by theme) */
+    /* These are usually defined globally by SillyTavern, but good to have fallbacks */
+    :root {
+        --background-color: common purple accent */
+        --accent-text-color: #FFFFFF;
+        --input-background-color: #333333;
+        --border-color: #555555;
+        --text-color-secondary: #b9bbbe;
+    }
+</style>
+
+<script>
+    // This script runs within the iframe of the settings panel.
+    // It needs to communicate with #222222;
+        --text-color: #DDDDDD;
+        --header-color: #EEEEEE;
+        --button-color: #444444;
+         the main extension script (content.js)
+    // which runs in the parent window.
+
+    const EXTENSION_ID = 'auto-translate-clear'; // Must match the ID in content.js
+
+    const autoClear--button-hover-color: #555555;
+        --button-active-color: #333333;
+        --accent-color: #6A5ACD; /* AToggle = document.getElementById('autoClearToggle');
+    const clearAllButton = document.getElementById('clearAllButton');
+    const statusDiv = document.getElementById('autoClearStatus');
+
+    // Function to get the extension API common purple accent */
+        --accent-text-color: #FFFFFF;
+        --input-background-color: #333333;
+        --border-color: #555555; from the parent window (SillyTavern)
+    function getExtensionApi() {
+        if (window.parent && window.parent.SillyTavern && window.parent.SillyTavern.extensions
+        --text-color-secondary: #b9bbbe;
+    }
+</style>
+
+<script>
+    // This script runs within the iframe of the settings panel.
+    // It needs to communicate with) {
+            return window.parent.SillyTavern.extensions[EXTENSION_ID];
+        }
+        console.error(`[${EXTENSION_ID} UI] SillyTavern extension API not found in the main extension script (content.js)
+    // which runs in the parent window.
+
+    const EXTENSION_ID = 'auto-translate-clear'; // Must match the ID in content.js
+
+    const autoClearToggle = document.getElementById('autoClearToggle');
+    const clearAllButton = document.getElementById('clearAllButton');
+    const statusDiv = document.getElementById('autoClearStatus');
+
+    // Function to get the extension API parent window.`);
+        return null;
+    }
+
+    // Function to display status messages in the UI panel
+    function showPanelStatus(message, type = 'info', duration = 4000) {
+        if (statusDiv.nemoTimeout) clearTimeout(statusDiv.nemoTimeout);
+        statusDiv.textContent = message;
+        statusDiv.style.color = type === 'error' ? 'red' : (type from the parent window (SillyTavern)
+    function getExtensionApi() {
+        if (window.parent && window.parent.SillyTavern && window.parent.SillyTavern.extensions === 'success' ? 'lightgreen' : 'var(--text-color-secondary)');
+        statusDiv.style.opacity = '1';
+        statusDiv.nemoTimeout = setTimeout(() => {
+            statusDiv) {
+            return window.parent.SillyTavern.extensions[EXTENSION_ID];
+        }
+        console.error(`[${EXTENSION_ID} UI] SillyTavern extension API not found in parent window.`);
+        return null;
+    }
+
+    // Function to display status messages in the UI panel
+    function showPanelStatus(message, type = 'info', duration = 4000) {
+        .style.opacity = '0';
+            statusDiv.textContent = '';
+        }, duration);
+    }
+
+    // Initialize UI state from the extension's script.js
+    function initializeUI() {
+        const api = getExtensionApi();
+        if (api && typeof api.getAutoClearState === 'function') {
+            autoClearToggle.checked = api.getAutoClearState();
+        } else {
+            // Fallif (statusDiv.nemoTimeout) clearTimeout(statusDiv.nemoTimeout);
+        statusDiv.textContent = message;
+        statusDiv.style.color = type === 'error' ? 'red' : (type === 'success' ? 'lightgreen' : 'var(--text-color-secondary)');
+        statusDiv.style.opacity = '1';
+        statusDiv.nemoTimeout = setTimeout(() => {
+            statusDivback if API not immediately available (e.g., race condition)
+            // or if the function isn't exposed yet.
+            setTimeout(initializeUI, 100);
+        }
+    }
+
+    //.style.opacity = '0';
+            statusDiv.textContent = '';
+        }, duration);
+    }
+
+    // Initialize UI state from the extension's script.js
+    function initializeUI() {
+        const Event listener for the toggle switch
+    autoClearToggle.addEventListener('change', () => {
+        const api = getExtensionApi();
+        if (api && typeof api.toggleAutoClear === 'function') {
+            api.toggleAutoClear(autoClearToggle.checked);
+            showPanelStatus(`Auto-clear translations: ${autoClearToggle.checked ? 'Enabled' : 'Disabled'}`, 'info');
+        } else {
+            show api = getExtensionApi();
+        if (api && typeof api.getAutoClearState === 'function') {
+            autoClearToggle.checked = api.getAutoClearState();
+        } else {
+            // FallPanelStatus('Extension API not ready. Please try again.', 'error');
+            // Revert toggle state if API call fails
+            autoClearToggle.checked = !autoClearToggle.checked;
+        }
+    });
+
+back if API not immediately available (e.g., race condition)
+            // or if the function isn't exposed yet.
+            setTimeout(initializeUI, 100);
+        }
+    }
+
+    // Event listener for the toggle switch
+    autoClearToggle.addEventListener('change', () => {
+        const api = getExtensionApi();
+        if (api && typeof api.toggleAutoClear === 'function') {
+            api    // Event listener for the "Clear Now" button
+    clearAllButton.addEventListener('click', () => {
+        const api = getExtensionApi();
+        if (api && typeof api.clearAllTranslations === 'function.toggleAutoClear(autoClearToggle.checked);
+            showPanelStatus(`Auto-clear translations: ${autoClearToggle.checked ? 'Enabled' : 'Disabled'}`, 'info');
+        } else {
+            show') {
+            api.clearAllTranslations();
+            showPanelStatus('All translated messages cleared.', 'success');
+        } else {
+            showPanelStatus('Extension API not ready. Please try again.', 'error');
+PanelStatus('Extension API not ready. Please try again.', 'error');
+            // Revert toggle state if API call fails
+            autoClearToggle.checked = !autoClearToggle.checked;
+        }
+    });
+
+        }
+    });
+
+    // Listen for messages from the parent (content.js) to update UI if state changes externally
+    window.addEventListener('message', (event) => {
+        // Ensure the message is from the    // Event listener for the "Clear Now" button
+    clearAllButton.addEventListener('click', () => {
+        const api = getExtensionApi();
+        if (api && typeof api.clearAllTranslations === 'function expected origin and type
+        if (event.source === window.parent && event.data && event.data.type === 'autoClearStateChange') {
+            autoClearToggle.checked = event.data.enabled;
+') {
+            api.clearAllTranslations();
+            showPanelStatus('All translated messages cleared.', 'success');
+        } else {
+            showPanelStatus('Extension API not ready. Please try again.', 'error');
+            // No need for a toast here, as the change originated from the main script
+            // which already shows a toast. This is just for UI sync.
+        }
+    });
+
+    // Initialize the UI when the panel        }
+    });
+
+    // Listen for messages from the parent (content.js) to update UI if state changes externally
+    window.addEventListener('message', (event) => {
+        // Ensure the message is from the loads
+    document.addEventListener('DOMContentLoaded', initializeUI);
+</script>
+--- END OF FILE settings.html ---
+``` expected origin and type
+        if (event.source === window.parent && event.data && event.data.type === 'autoClearStateChange') {
+            autoClearToggle.checked = event.data.enabled;
+
+
+---
+
+### 3. `styles.css` (Simplified)
+
+This file now only contains the necessary CSS variables and styles for the auto-clear button that appears next to the wand icon on messages. All "NemoPresetExt" specific UI styles have been removed.
+
+            // No need for a toast here, as the change originated from the main script
+            // which already shows a toast. This is just for UI sync.
+        }
+    });
+
+    // Initialize the UI when the panel```css
+--- START OF FILE styles.css ---
+ loads
+    document.addEventListener('DOMContentLoaded', initializeUI);
+</script>
+--- END OF FILE settings.html ---
+```/* styles.css for AutoTranslateClear */
+
+/* --- CSS Variables --- */
+:root {
+    /* Map SillyTavern's theme variables to our extension's variables. */
+    /* The second value is
+
+---
+
+### 3. `styles.css` (Simplified)
+
+This file now only contains a fallback in case the ST variable isn't defined. */
+    --auto-clear-primary-accent: var(--primary-accent, #6A5ACD); /* Using a purple accent */
+    --auto- the necessary CSS variables and styles for the auto-clear button that appears next to the wand icon on messages. All "NemoPresetExt" specific UI styles have been removed.
+
+```css
+--- START OF FILE styles.css ---
+clear-secondary-accent: var(--secondary-accent, #8A2BE2); /* Another purple shade */
+    --auto-clear-primary-bg: var(--secondary-bg, #2c2f33/* styles.css for AutoTranslateClear */
+
+/* --- CSS Variables --- */
+:root {
+    /* Map SillyTavern's theme variables to our extension's variables. */
+    /* The second value is a fallback in case the ST variable isn't defined. */
+    --auto-clear-primary-accent: var(--primary-accent, #6A5ACD); /* Using a purple accent */
+    --auto-);
+    --auto-clear-secondary-bg: var(--main-bg, #232528);
+    --auto-clear-tertiary-bg: var(--tertiary-bg, #clear-secondary-accent: var(--secondary-accent, #8A2BE2); /* Another purple shade */
+    --auto-clear-primary-bg: var(--secondary-bg, #2c2f3336393f);
+    --auto-clear-item-hover-bg: var(--tertiary-bg-with-hover, #40444b);
+    --auto-clear-text-color: var(--text-color, #dcddde);
+    --auto-clear-text-muted: var(--text-color-secondary, #b9bbbe);
+    --auto-clear-border-);
+    --auto-clear-secondary-bg: var(--main-bg, #232528);
+    --auto-clear-tertiary-bg: var(--tertiary-bg, #color: var(--border-color, #444);
+    --auto-clear-shadow-color: rgba(0, 0, 0, 0.3);
+    --auto-clear-glow-36393f);
+    --auto-clear-item-hover-bg: var(--tertiary-bg-with-hover, #40444b);
+    --auto-clear-textcolor: var(--primary-accent-glow, rgba(106, 90, 205, 0.7));
+}
+
+/* Style for the auto-clear button next to the wand icon */
+-color: var(--text-color, #dcddde);
+    --auto-clear-text-muted: var(--text-color-secondary, #b9bbbe);
+    --auto-clear-border-.auto-translate-clear-button {
+    /* Inherit common button styles from SillyTavern */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;color: var(--border-color, #444);
+    --auto-clear-shadow-color: rgba(0, 0, 0, 0.3);
+    --auto-clear-glow-
+    width: 24px; /* Adjust size as needed */
+    height: 24px; /* Adjust size as needed */
+    margin-left: 5px; /* Space from other buttons */
+    color: var(--primary-accent-glow, rgba(106, 90, 205, 0.7));
+}
+
+/* Style for the auto-clear button next to the wand icon */
+border-radius: 50%; /* Make it round */
+    background-color: var(--button-color); /* Use SillyTavern's button color variable */
+    color: var(--text-color);.auto-translate-clear-button {
+    /* Inherit common button styles from SillyTavern */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center; /* Use SillyTavern's text color variable */
+    font-size: 1em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    flex-shrink:
+    width: 24px; /* Adjust size as needed */
+    height: 24px; /* Adjust size as needed */
+    margin-left: 5px; /* Space from other buttons */
+     0; /* Prevent shrinking */
+}
+
+.auto-translate-clear-button:hover {
+    background-color: var(--button-hover-color); /* Use SillyTavern's hover color variable */border-radius: 50%; /* Make it round */
+    background-color: var(--button-color); /* Use SillyTavern's button color variable */
+    color: var(--text-color);
+}
+
+.auto-translate-clear-button.active {
+    background-color: var(--accent-color); /* Highlight when active */
+    color: var(--accent-text-color);
+}
+
+/* Ensure /* Use SillyTavern's text color variable */
+    font-size: 1em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    flex-shrink: the icon is centered */
+.auto-translate-clear-button.fa-solid::before {
+    line-height: 1;
+}
+
+/* General SillyTavern UI elements that might be affected by our 0; /* Prevent shrinking */
+}
+
+.auto-translate-clear-button:hover {
+    background-color: var(--button-hover-color); /* Use SillyTavern's hover color variable */ styles */
+/* Ensure our styles don't bleed into other parts of ST */
+.inline-drawer-header {
+    background-color: var(--input-background-color);
+    border: 1px solid var
+}
+
+.auto-translate-clear-button.active {
+    background-color: var(--accent-color); /* Highlight when active */
+    color: var(--accent-text-color);
+}
+
+/* Ensure(--border-color);
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display the icon is centered */
+.auto-translate-clear-button.fa-solid::before {
+    line-height: 1;
+}
+
+/* General SillyTavern UI elements that might be affected by our: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color);
+}
+
+.inline-drawer-header:hover {
+    background-color styles */
+/* Ensure our styles don't bleed into other parts of ST */
+.inline-drawer-header {
+    background-color: var(--input-background-color);
+    border: 1px solid var: var(--button-hover-color);
+}
+
+.inline-drawer-icon {
+    transition: transform 0.2s ease;
+}
+
+.inline-drawer-icon.down {
+    transform: rotate(--border-color);
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display(0deg);
+}
+
+.inline-drawer-icon.up {
+    transform: rotate(180deg);
+}
+
+.inline-drawer-content {
+    padding: 10px 0;
+    border-left: 1px solid var(--border-color);
+    margin-left: 10px;
+}
+
+/* Basic form group styling for consistency */
+.form-group {
+    margin-: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color);
+}
+
+.inline-drawer-header:hover {
+    background-color: var(--button-hover-color);
+}
+
+.inline-drawer-icon {
+    transition: transform 0.2s ease;
+}
+
+.inline-drawer-icon.down {
+    transform: rotatebottom: 15px;
+}
+
+.text_pole {
+    background-color: var(--input-background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 8px;
+    border-radius: 5px;
+    width: calc(100% - 18px); /* Account for padding and border */
+}(0deg);
+}
+
+.inline-drawer-icon.up {
+    transform: rotate(180deg);
+}
+
+.inline-drawer-content {
+    padding: 10px 0;
+
+.menu_button {
+    background-color: var(--button-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    padding:
+    border-left: 1px solid var(--border-color);
+    margin-left: 10px;
+}
+
+/* Basic form group styling for consistency */
+.form-group {
+    margin- 8px 12px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+}
+
+.menu_button:bottom: 15px;
+}
+
+.text_pole {
+    background-color: var(--input-background-color);
+    border: 1px solid var(--border-color);
+    color: varhover {
+    background-color: var(--button-hover-color);
+}
+
+.menu_button:active {
+    background-color: var(--button-active-color);
+}
+
+/* Ensure FontAwesome icons(--text-color);
+    padding: 8px;
+    border-radius: 5px;
+    width: calc(100% - 18px); /* Account for padding and border */
+}
+
+.menu_button {
+    background-color: var(--button-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    padding: are correctly sized */
+.fa-solid {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+}
+--- END OF FILE styles.css ---
