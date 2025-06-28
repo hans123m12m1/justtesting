@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Translate Clear Settings</title>
+    <style>
+        /* Basic styling to match SillyTavern's dark theme */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color); /* SillyTavern background */
+            color: var(--text-color); /* SillyTavern text color */
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto; /* Enable scrolling if content overflows */
+        }
+
+        h2 {
+            color: var(--header-color); /* SillyTavern header color */
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--input-background-color); /* Similar to input fields */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .setting-item label {
+            flex-grow: 1;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+
+        /* Toggle Switch Styling (inspired by modern UI toggles) */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--button-color); /* Off state color */
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-color); /* Handle color */
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-color); /* On state color */
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--accent-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .button-action {
+            background-color: var(--button-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+
+        .button-action:hover {
+            background-color: var(--button-hover-color);
+        }
+
+        .button-action:active {
+            background-color: var(--button-active-color);
+        }
+
+        /* SillyTavern CSS variables (approximate, may vary slightly by theme) */
+        :root {
+            --background-color: #222222;
+            --text-color: #DDDDDD;
+            --header-color: #EEEEEE;
+            --button-color: #444444;
+            --button-hover-color: #555555;
+            --button-active-color: #333333;
+            --accent-color: #6A5ACD; /* A common purple accent */
+            --accent-text-color: #FFFFFF;
+            --input-background-color: #333333;
+            --border-color: #555555;
+        }
+    </style>
+</head>
+<body>
+    <h2>Auto Translate Clear Settings</h2>
+
+    <div class="setting-item">
+        <label for="autoClearToggle">Enable Auto-Clear Translations</label>
+        <label class="switch">
+            <input type="checkbox" id="autoClearToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="setting-item">
+        <label>Manually Clear All Translations</label>
+        <button id="clearAllButton" class="button-action">Clear Now</button>
+    </div>
+
+    <script>
+        const autoClearToggle = document.getElementById('autoClearToggle');
+        const clearAllButton = document.getElementById('clearAllButton');
+
+        // Function to get the extension API from the parent window (SillyTavern)
+        function getExtensionApi() {
+            // SillyTavern typically exposes extensions on window.SillyTavern.extensions
+            // This script runs within an iframe, so it needs to access the parent's window.
+            if (window.parent && window.parent.SillyTavern && window.parent.SillyTavern.extensions) {
+                return window.parent.SillyTavern.extensions['auto-translate-clear'];
+            }
+            console.error('SillyTavern extension API not found in parent window.');
+            return null;
+        }
+
+        // Initialize UI state from the extension's script.js
+        function initializeUI() {
+            const api = getExtensionApi();
+            if (api) {
+                autoClearToggle.checked = api.getAutoClearState();
+            } else {
+                // Fallback if API not immediately available (e.g., race condition)
+                setTimeout(initializeUI, 100);
+            }
+        }
+
+        // Event listener for the toggle switch
+        autoClearToggle.addEventListener('change', () => {
+            const api = getExtensionApi();
+            if (api) {
+                api.toggleAutoClear(autoClearToggle.checked);
+            }
+        });
+
+        // Event listener for the "Clear Now" button
+        clearAllButton.addEventListener('click', () => {
+            const api = getExtensionApi();
+            if (api) {
+                api.clearAllTranslations();
+            }
+        });
+
+        // Listen for messages from the parent (script.js) to update UI if state changes externally
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'autoClearStateChange') {
+                autoClearToggle.checked = event.data.enabled;
+            }
+        });
+
+        // Initialize the UI when the panel loads
+        document.addEventListener('DOMContentLoaded', initializeUI);
+    </script>
+</body>
+</html>
