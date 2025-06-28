@@ -1,486 +1,73 @@
-:root {
-    --primary-color: #5d5c61;
-    --secondary-color: #737373; /* A medium gray */
-    --accent-color: #6d6d7d; /* A slightly darker gray for highlights */
-    --background-light: #f0f2f5;
-    --background-card: #ffffff;
-    --text-color: #333;
-    --border-color: #e0e0e0;
-    --success-color: #4CAF50;
-    --danger-color: #f44336;
-    --info-color: #2196F3;
-    --shadow-light: 0 4px 8px rgba(0, 0, 0, 0.05);
-    --border-radius: 8px;
-    --transition-speed: 0.3s ease;
-}
+/* Add to your existing style.css */
 
-body {
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 30px;
-    background-color: var(--background-light);
-    color: var(--text-color);
-    line-height: 1.6;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Align to top */
-    min-height: 100vh;
-}
-
-.container {
-    max-width: 700px;
-    width: 100%;
-    margin: 0 auto;
+/* Floating UI Panel */
+.floating-panel {
+    position: fixed;
+    bottom: 20px; /* Initial position */
+    right: 20px;  /* Initial position */
+    width: 250px; /* Adjust as needed */
     background-color: var(--background-card);
-    padding: 30px;
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
-}
-
-header {
-    text-align: center;
-    margin-bottom: 40px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-header h1 {
-    color: var(--primary-color);
-    margin-bottom: 10px;
-    font-size: 2em;
-    font-weight: 700;
-}
-
-.status-indicator {
-    font-size: 1.1em;
-    color: var(--secondary-color);
+    padding: 15px;
+    z-index: 9999; /* Ensure it's on top */
+    cursor: grab; /* Indicates it's draggable */
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.status-dot {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: var(--danger-color); /* Default disabled */
+    flex-direction: column;
+    gap: 15px;
     transition: background-color var(--transition-speed);
 }
 
-.status-dot.active {
-    background-color: var(--success-color); /* Enabled */
+.floating-panel.disabled {
+    opacity: 0.7;
+    background-color: #f8f8f8;
 }
 
-.status-text {
-    font-weight: bold;
-    color: var(--danger-color);
-    transition: color var(--transition-speed);
-}
-
-.status-dot.active + .status-text {
-    color: var(--success-color);
-}
-
-
-.settings-section {
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.settings-section:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-.settings-section h2 {
-    color: var(--primary-color);
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.5em;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.settings-section h2::before {
-    content: '⚙️'; /* Modern icon/emoji */
-    font-size: 0.8em;
-}
-
-.setting-item {
+.floating-panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    background-color: var(--background-light);
-    padding: 12px 15px;
-    border-radius: var(--border-radius);
-    transition: background-color var(--transition-speed);
+    margin-bottom: 10px;
 }
 
-.setting-item:hover {
-    background-color: #e8ebf0;
-}
-
-.setting-item label {
-    flex-grow: 1;
-    margin-right: 15px;
-    font-size: 1.05em;
-}
-
-/* Custom Checkbox Style */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 24px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--secondary-color);
-    transition: var(--transition-speed);
-    border-radius: 24px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: var(--transition-speed);
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: var(--success-color);
-}
-
-input:focus + .slider {
-    box-shadow: 0 0 1px var(--success-color);
-}
-
-input:checked + .slider:before {
-    transform: translateX(16px);
-}
-
-
-.btn {
-    padding: 12px 20px;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 600;
-    transition: all var(--transition-speed);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none; /* In case it's used on anchors */
-}
-
-.btn:active {
-    transform: translateY(1px);
-}
-
-.primary-btn {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.primary-btn:hover {
-    background-color: #4a494d; /* Slightly darker primary */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.secondary-btn {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-.secondary-btn:hover {
-    background-color: #606060; /* Slightly darker secondary */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Exception Panel */
-.exception-panel {
-    margin-top: 20px;
-    padding: 20px;
-    background-color: var(--background-light);
-    border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
-    display: none; /* Hidden by default */
-}
-
-.exception-panel p {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-style: italic;
-    color: var(--secondary-color);
-}
-
-.exception-list {
-    margin-bottom: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.exception-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    background-color: var(--background-card);
-    border: 1px solid var(--border-color);
-    border-radius: 20px; /* Pill shape */
-    font-size: 0.9em;
-    color: var(--text-color);
-    gap: 5px;
-}
-
-.remove-exception {
-    color: var(--danger-color);
-    cursor: pointer;
-    font-weight: bold;
-    margin-left: 5px;
-    font-size: 1.2em;
-    line-height: 1; /* For better alignment */
-    transition: color var(--transition-speed);
-}
-
-.remove-exception:hover {
-    color: #c82333; /* Darker red */
-}
-
-.add-exception {
-    display: flex;
-    gap: 10px;
-}
-
-.add-exception input[type="text"] {
-    flex-grow: 1;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    font-size: 1em;
-    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.add-exception input[type="text"]:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(93, 92, 97, 0.1);
-    outline: none;
-}
-
-/* Statistics Grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-}
-
-.stat-item {
-    background-color: var(--background-light);
-    padding: 20px;
-    border-radius: var(--border-radius);
-    text-align: center;
-    font-size: 0.95em;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
-}
-
-.stat-item span {
-    font-weight: bold;
+.floating-panel-header h3 {
+    margin: 0;
     color: var(--primary-color);
-    font-size: 1.6em;
-    display: block;
-    margin-top: 8px;
+    font-size: 1.2em;
 }
 
-
-/* Chat Preview */
-.chat-preview {
-    border: 1px solid var(--border-color);
-    padding: 20px;
-    border-radius: var(--border-radius);
-    background-color: #fcfcfc;
-    max-height: 250px; /* Limit height for preview */
-    overflow-y: auto; /* Add scroll if content exceeds height */
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
-}
-
-.message {
-    margin-bottom: 20px;
-    padding: 12px 15px;
-    border-radius: 12px;
-    max-width: 85%;
-    word-wrap: break-word;
-    font-size: 0.95em;
-}
-
-.user-message {
-    background-color: var(--primary-color);
-    color: white;
-    margin-left: auto;
-    border-bottom-right-radius: 4px;
-}
-
-.bot-message {
-    background-color: var(--background-light);
-    color: var(--text-color);
-    margin-right: auto;
-    border: 1px solid var(--border-color);
-    border-bottom-left-radius: 4px;
-}
-
-.attachment {
+.floating-panel-content {
     display: flex;
-    align-items: center;
-    background-color: var(--background-card);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 10px;
-    margin-top: 10px;
-    font-size: 0.9em;
-    color: var(--secondary-color);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    transition: opacity var(--transition-speed);
-}
-
-.attachment.removed {
-    opacity: 0.6;
-    text-decoration: line-through;
-    font-style: italic;
-    background-color: #ffebee; /* Light red background for removed */
-    border-color: #ffcdd2;
-}
-
-.attachment-icon {
-    font-size: 1.4em;
-    margin-right: 12px;
-    color: var(--primary-color); /* Icon color */
-}
-
-.attachment.removed .attachment-icon {
-    color: var(--danger-color);
-}
-
-.attachment-info {
-    flex-grow: 1;
-}
-
-.attachment-name {
-    font-weight: bold;
-    color: var(--text-color);
-}
-.attachment.removed .attachment-name {
-    color: var(--secondary-color);
-}
-
-
-.attachment-size {
-    font-size: 0.8em;
-    color: #777;
-}
-
-
-/* Notification */
-.notification {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--info-color); /* Info color for notifications */
-    color: white;
-    padding: 15px 25px;
-    border-radius: var(--border-radius);
-    opacity: 0;
-    visibility: hidden; /* Hide completely when not shown */
-    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
-    z-index: 1000;
-    box-shadow: var(--shadow-light);
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 10px;
 }
 
-.notification.show {
-    opacity: 1;
-    visibility: visible;
-}
-
-.notification-icon {
-    font-size: 1.5em;
-}
-
-/* Scrollbar styling for chat preview */
-.chat-preview::-webkit-scrollbar {
-    width: 8px;
-}
-
-.chat-preview::-webkit-scrollbar-track {
-    background: var(--background-light);
-    border-radius: 10px;
-}
-
-.chat-preview::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 10px;
-}
-
-.chat-preview::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
-}
-
-/* General Input Styles */
-input[type="text"],
-input[type="number"] {
-    /* Apply similar styles to add-exception input */
+.floating-panel .setting-item { /* Reuse settings-section styles */
+    margin-bottom: 0;
     padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    font-size: 1em;
-    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-input[type="text"]:focus,
-input[type="number"]:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(93, 92, 97, 0.1);
-    outline: none;
+.floating-panel .btn {
+    width: 100%;
+    justify-content: center;
 }
 
-/* Responsive considerations */
-@media (max-width: 768px) {
-    body {
-        padding: 20px 15px;
-    }
+.floating-panel .settings-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
 
-    .container {
-        padding: 20px;
-    }
+.floating-panel .settings-btn:hover {
+    background-color: #606060;
+}
 
-    .stats-grid {
-        grid-template-columns: 1fr; /* Stack stats on smaller screens */
-    }
+/* Specific status for floating UI */
+.floating-panel .status-text {
+    font-weight: bold;
+    color: var(--danger-color); /* Default disabled */
+}
+
+.floating-panel .status-dot.active + .status-text {
+    color: var(--success-color);
 }
