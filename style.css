@@ -1,73 +1,29 @@
-/* Add to your existing style.css */
-
-/* Floating UI Panel */
-.floating-panel {
-    position: fixed;
-    bottom: 20px; /* Initial position */
-    right: 20px;  /* Initial position */
-    width: 250px; /* Adjust as needed */
-    background-color: var(--background-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-light);
-    padding: 15px;
-    z-index: 9999; /* Ensure it's on top */
-    cursor: grab; /* Indicates it's draggable */
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    transition: background-color var(--transition-speed);
-}
-
-.floating-panel.disabled {
-    opacity: 0.7;
-    background-color: #f8f8f8;
-}
-
-.floating-panel-header {
-    display: flex;
-    justify-content: space-between;
+/* Style for the auto-clear button */
+.auto-translate-clear-button {
+    /* Inherit common button styles from SillyTavern */
+    display: inline-flex;
     align-items: center;
-    margin-bottom: 10px;
-}
-
-.floating-panel-header h3 {
-    margin: 0;
-    color: var(--primary-color);
-    font-size: 1.2em;
-}
-
-.floating-panel-content {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.floating-panel .setting-item { /* Reuse settings-section styles */
-    margin-bottom: 0;
-    padding: 10px 12px;
-}
-
-.floating-panel .btn {
-    width: 100%;
     justify-content: center;
+    width: 24px; /* Adjust size as needed */
+    height: 24px; /* Adjust size as needed */
+    margin-left: 5px; /* Space from other buttons */
+    border-radius: 50%; /* Make it round */
+    background-color: var(--button-color); /* Use SillyTavern's button color variable */
+    color: var(--text-color); /* Use SillyTavern's text color variable */
+    font-size: 1em;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.floating-panel .settings-btn {
-    background-color: var(--secondary-color);
-    color: white;
+.auto-translate-clear-button:hover {
+    background-color: var(--button-hover-color); /* Use SillyTavern's hover color variable */
 }
 
-.floating-panel .settings-btn:hover {
-    background-color: #606060;
+.auto-translate-clear-button.active {
+    background-color: var(--accent-color); /* Highlight when active */
+    color: var(--accent-text-color);
 }
 
-/* Specific status for floating UI */
-.floating-panel .status-text {
-    font-weight: bold;
-    color: var(--danger-color); /* Default disabled */
-}
-
-.floating-panel .status-dot.active + .status-text {
-    color: var(--success-color);
+/* Ensure the icon is centered */
+.auto-translate-clear-button.fa-solid::before {
+    line-height: 1;
 }
