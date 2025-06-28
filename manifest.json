@@ -5,7 +5,7 @@
     "description": "A comprehensive tool to enhance AI writing quality by fixing echoes and repetitive phrases ('slop'), featuring the advanced Project Gremlin pipeline.",
     "requires": [],
     "optional": [],
-    "js": "index.js",
+    "js": "content.js",
     "css": "styles.css",
     "homePage": "https://github.com/hans123m12m1/justtesting",
     "loading_order": 1000
