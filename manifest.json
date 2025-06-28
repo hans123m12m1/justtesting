@@ -1,15 +1,12 @@
 {
-    "display_name": "yes",
-    "loading_order": 1,
+    "display_name": "attachment_remover",
+    "author": "@NemoVonNirgend",
+    "version": "0.0.1",
+    "description": "A comprehensive tool to enhance AI writing quality by fixing echoes and repetitive phrases ('slop'), featuring the advanced Project Gremlin pipeline.",
     "requires": [],
     "optional": [],
-    "dependencies": [],
     "js": "script.js",
-    "css": "style.css",
-    "author": "yes",
-    "version": "1.0.1",
+    "css": "styles.css",
     "homePage": "https://github.com/hans123m12m1/justtesting",
-    "auto_update": true,
-
-    }
+    "loading_order": 1000
 }
